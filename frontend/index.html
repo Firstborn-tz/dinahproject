@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dinah Stationaries | Stationery, Printing & Document Services</title>
+<meta name="description" content="Dinah Stationaries provides quality stationery products, printing, photocopying, binding, lamination and professional document services." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%2317324D'/><path d='M9 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8l-5-5H9z' fill='none' stroke='%23FBBF24' stroke-width='1.6' stroke-linejoin='round'/><path d='M14 3v5h5' fill='none' stroke='%23FBBF24' stroke-width='1.6' stroke-linejoin='round'/></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+
+<!-- ===== Supabase project config =====
+     Fill these in (Supabase Dashboard -> Project Settings -> API), or set
+     them via your Vercel environment/build step. The anon key is safe to
+     expose publicly — it's designed for this and is only as powerful as
+     the Row Level Security rules in your database allow. -->
+<script>
+  window.SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+  window.SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+</script>
+</head>
+<body>
+
+<!-- ============ PUBLIC SITE ============ -->
+<div id="public-site">
+
+  <header class="nav" id="nav">
+    <div class="container nav-inner">
+      <div class="brand"><span class="brand-icon" data-icon="pen"></span><span>DINAH <strong>STATIONARIES</strong></span></div>
+      <nav class="nav-links" id="nav-links">
+        <a href="#home">Home</a>
+        <a href="#products">Stationery</a>
+        <a href="#services">Services</a>
+        <a href="#why-us">Why Choose Us</a>
+        <a href="#location">Location</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="btn btn-primary" id="login-open-btn">Login</button>
+        <button class="hamburger" id="hamburger" data-icon="menu" aria-label="Menu"></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero" id="home">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="container hero-inner">
+      <div class="hero-copy reveal">
+        <span class="eyebrow">Stationery · Printing · Document Services</span>
+        <h1>Your Trusted Stationery &amp; Document Service Partner</h1>
+        <p>Quality stationery products, professional printing, photocopying, binding, lamination and document services — all in one convenient place.</p>
+        <div class="hero-ctas">
+          <a href="#services" class="btn btn-primary btn-lg">Explore Our Services</a>
+          <a href="#location" class="btn btn-outline btn-lg">Visit Our Office</a>
+        </div>
+      </div>
+      <div class="hero-art reveal" aria-hidden="true">
+        <span class="hero-art-item" data-icon="book"></span>
+        <span class="hero-art-item" data-icon="pencil"></span>
+        <span class="hero-art-item" data-icon="printer"></span>
+        <span class="hero-art-item" data-icon="paperclip"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="section-title reveal">Inside Dinah Stationaries</h2>
+      <p class="section-subtitle reveal">Add your own shop photos here — see the README for exact instructions (30 seconds, no code experience needed).</p>
+      <div class="grid grid-3" id="gallery-grid">
+        <!--
+          PHOTO SLOT 1 of 3 — replace the whole <div class="photo-slot">...</div>
+          with: <img class="photo-slot" src="YOUR-PHOTO-URL" alt="Dinah Stationaries shop front" />
+          See README.md -> "Adding your own photos" for where to get a URL.
+        -->
+        <div class="photo-slot reveal"><span class="photo-slot-icon" data-icon="briefcase"></span><span class="photo-slot-label">Shop Front</span></div>
+        <div class="photo-slot reveal"><span class="photo-slot-icon" data-icon="package"></span><span class="photo-slot-label">Product Shelves</span></div>
+        <div class="photo-slot reveal"><span class="photo-slot-icon" data-icon="printer"></span><span class="photo-slot-label">Printing Counter</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="why-us">
+    <div class="container">
+      <h2 class="section-title reveal">Why Choose Dinah Stationaries</h2>
+      <div class="grid grid-3" id="why-us-grid">
+        <div class="card reveal"><div class="card-icon" data-icon="check"></div><h3>Quality Products</h3><p>Reliable stationery products for school, office and personal use.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="printer"></div><h3>Convenient Services</h3><p>Printing, photocopying, binding, lamination and other document services.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="zap"></div><h3>Professional Service</h3><p>Fast and customer-friendly service every time you visit.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="map-pin"></div><h3>Convenient Location</h3><p>Easy to find and easy to visit — see our map below.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="dollar"></div><h3>Affordable Solutions</h3><p>Practical stationery and document solutions for everyone.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="briefcase"></div><h3>One-Stop Partner</h3><p>Products and services available in one convenient place.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="products">
+    <div class="container">
+      <h2 class="section-title reveal">Stationery Products Available</h2>
+      <p class="section-subtitle reveal">A few of our popular items — visit us in-store for the full catalogue.</p>
+      <div class="grid grid-4" id="products-grid">
+        <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="services">
+    <div class="container">
+      <h2 class="section-title reveal">Our Professional Services</h2>
+      <div class="grid grid-4" id="services-grid">
+        <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="section-title reveal">Who We Serve</h2>
+      <div class="grid grid-4">
+        <div class="card reveal"><div class="card-icon" data-icon="graduation-cap"></div><h3>Students</h3><p>Stationery, printing, photocopying, binding and academic document support.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="briefcase"></div><h3>Offices</h3><p>Office stationery, printing, document preparation and supplies.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="trending-up"></div><h3>Businesses</h3><p>Professional document and stationery solutions.</p></div>
+        <div class="card reveal"><div class="card-icon" data-icon="user"></div><h3>Individuals</h3><p>Personal stationery and document services.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container cta-inner reveal">
+      <h2>Need Stationery or Document Services?</h2>
+      <p>Visit Dinah Stationaries today and get everything you need in one place.</p>
+      <div class="hero-ctas">
+        <a href="#services" class="btn btn-white btn-lg">Explore Services</a>
+        <a href="#location" class="btn btn-outline-white btn-lg">Find Our Location</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="location">
+    <div class="container">
+      <h2 class="section-title reveal">Find Dinah Stationaries</h2>
+      <div class="grid grid-2 location-grid">
+        <div id="map-embed-wrap" class="map-wrap reveal"></div>
+        <div class="location-details reveal" id="location-details">
+          <p class="muted">Loading location details…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="contact">
+    <div class="container">
+      <h2 class="section-title reveal">Contact Us</h2>
+      <div class="grid grid-4" id="contact-grid"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container grid grid-4">
+      <div>
+        <div class="brand brand-footer"><span class="brand-icon" data-icon="pen"></span> DINAH <strong>STATIONARIES</strong></div>
+        <p class="muted">Your trusted stationery and document service partner.</p>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <a href="#home">Home</a><a href="#products">Stationery</a><a href="#services">Services</a><a href="#location">Location</a><a href="#contact">Contact</a>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <a href="#services">Printing</a><a href="#services">Photocopying</a><a href="#services">Binding</a><a href="#services">Lamination</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="#contact">Phone</a><a href="#contact">Email</a><a href="#location">Location</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="footer-year"></span> Dinah Stationaries · Developed by Progr_Willy</div>
+  </footer>
+</div>
+
+<!-- ============ AUTH MODAL (login / forgot-password / reset-password) ============ -->
+<div id="login-modal" class="modal-backdrop hidden">
+  <div class="modal login-modal" id="auth-modal-body"><!-- filled dynamically by app.js --></div>
+</div>
+
+<!-- ============ AUTHENTICATED APP ============ -->
+<div id="app-view" class="hidden">
+  <header class="app-topbar">
+    <div class="app-topbar-left">
+      <button class="sidebar-toggle" id="sidebar-toggle" data-icon="menu" aria-label="Toggle menu"></button>
+      <div class="brand"><span class="brand-icon" data-icon="pen"></span> DINAH <strong>STATIONARIES</strong></div>
+    </div>
+    <div class="app-topbar-right">
+      <span id="sync-status" class="sync-badge">● Online</span>
+      <span id="app-user-label"></span>
+      <button class="btn btn-outline btn-sm" id="logout-btn">Logout</button>
+    </div>
+  </header>
+  <div class="app-shell">
+    <aside class="app-sidebar" id="app-sidebar"></aside>
+    <div class="sidebar-scrim" id="sidebar-scrim"></div>
+    <main class="app-main" id="app-main"></main>
+  </div>
+</div>
+
+<div id="dialog-root"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -119,7 +119,7 @@ delivery to real users:
    git add .
    git commit -m "Dinah Stationaries - Supabase production build"
    git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/dinah-stationaries.git
+   git remote add origin https://github.com/Firstborn-tz/dinahproject.git
    git push -u origin main
    ```
 2. Go to [vercel.com](https://vercel.com) → sign in with GitHub → **Add New → Project** → import your repo.
@@ -212,6 +212,8 @@ inherit from me.
 - [ ] Tried "Forgot Password" and received (or previewed) the reset email
 - [ ] Manager → Settings has your real business details, not placeholders
 - [ ] Custom domain (if used) shows a valid HTTPS padlock
-#   d i n a h p r o j e c t  
- #   d i n a h p r o j e c t  
+#   d i n a h p r o j e c t 
+ 
+ #   d i n a h p r o j e c t 
+ 
  
