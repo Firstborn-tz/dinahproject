@@ -98,17 +98,25 @@ created manually, once:
    an Admin, and create every other user (Admins and Cashiers) from the
    **Users** page from now on.
 
-### 1.6 Email delivery for password reset (optional but recommended)
-Supabase sends password-reset emails out of the box using its own limited
-email service (fine for testing, rate-limited on the free tier). For real
-delivery to real users:
-1. **Authentication** → **Settings** → **SMTP Settings** → enable **Custom SMTP**.
-2. Use a free Gmail App Password (same as before: enable 2-Step
-   Verification on a Gmail account → generate an App Password at
-   <https://myaccount.google.com/apppasswords>) or a free tier of
-   Brevo/Resend — plug host/port/user/password in here.
-3. Optionally customize the reset-email template under **Authentication → Email Templates**.
+### 1.6 Brevo email delivery
+For password reset emails, configure Supabase Auth's SMTP transport:
+1. In Brevo, verify the sender address/domain and obtain the SMTP login and SMTP key from **Transactional > Settings > SMTP & API**.
+2. In Supabase, open **Authentication > Settings > SMTP Settings**, enable custom SMTP, and enter host `smtp-relay.brevo.com`, port `587`, your Brevo SMTP login as the username, and the Brevo SMTP key as the password. Set a sender address that Brevo has verified.
+3. Optionally customize the reset-email template under **Authentication > Email Templates**.
 
+The login form also sends a best-effort security notification to the account email after a successful interactive login. This uses Brevo's REST API from a Supabase Edge Function; credentials stay server-side:
+1. Create a **Brevo API key** (the REST API key; it is distinct from the SMTP key) and use your verified sender address.
+2. Set Edge Function secrets (never put these in frontend files or Git):
+   ```bash
+   supabase secrets set BREVO_API_KEY=YOUR_BREVO_API_KEY BREVO_SENDER_EMAIL=verified@yourdomain.com
+   ```
+   Optionally set `BREVO_SENDER_NAME` (defaults to `Dinah Stationaries`).
+3. Deploy the function:
+   ```bash
+   supabase functions deploy login-notification
+   ```
+
+If an API key has been pasted into chat, rotate it in Brevo before configuring the secrets. Use the newly created key; do not reuse a credential that has been exposed.
 ---
 
 ## Part 2 — Deploy the frontend to Vercel

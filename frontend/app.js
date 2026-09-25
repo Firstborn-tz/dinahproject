@@ -292,11 +292,20 @@ async function handleLogin(e) {
   const errBox = document.getElementById('login-error');
   const submitBtn = document.getElementById('login-submit-btn');
   errBox.classList.add('hidden'); submitBtn.disabled = true; submitBtn.textContent = 'Logging in…';
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     errBox.textContent = 'Invalid email or password.'; errBox.classList.remove('hidden');
     submitBtn.disabled = false; submitBtn.textContent = 'Login';
     return;
+  }
+  // Login alerts are best-effort: an email provider outage must not prevent login.
+  try {
+    await supabase.functions.invoke('login-notification', {
+      body: {},
+      headers: { Authorization: `Bearer ${data.session.access_token}` }
+    });
+  } catch (notificationError) {
+    console.warn('Login notification could not be sent.', notificationError);
   }
   closeAuthModal();
   await enterApp();
