@@ -12,9 +12,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let CURRENT_USER = null; // { id, email, role, branchId, fullName }
 let SETTINGS = null;
 let BRANCHES = [];
-let SELECTED_BRANCH = localStorage.getItem('dinah_selected_branch') || null;
+const storedBranchId = localStorage.getItem('dinah_selected_branch');
+let SELECTED_BRANCH = storedBranchId && storedBranchId !== 'undefined' && storedBranchId !== 'null' ? storedBranchId : null;
 let ACTIVE_TAB = 'dashboard';
 let CART = [];
+let PASSWORD_RECOVERY_ACTIVE = false;
 
 // ---------------------------------------------------------------------------
 // Icon system — inline SVG only, never emoji.
@@ -317,7 +319,9 @@ async function handleForgotPassword(e) {
   const msgBox = document.getElementById('forgot-message');
   const btn = document.getElementById('forgot-submit-btn');
   btn.disabled = true; btn.textContent = 'Sending…';
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  const resetUrl = new URL(window.location.origin);
+  resetUrl.searchParams.set('reset', '1');
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: resetUrl.toString() });
   msgBox.classList.remove('hidden');
   if (error) { msgBox.className = 'form-error'; msgBox.textContent = friendlyError(error); }
   else { msgBox.className = 'form-success'; msgBox.textContent = 'If that email has an account, a reset link is on its way.'; }
@@ -333,6 +337,10 @@ async function handleResetPassword(e) {
   if (pass !== confirmPass) { errBox.textContent = 'Passwords do not match.'; errBox.classList.remove('hidden'); return; }
   const { error } = await supabase.auth.updateUser({ password: pass });
   if (error) { errBox.textContent = friendlyError(error); errBox.classList.remove('hidden'); return; }
+  PASSWORD_RECOVERY_ACTIVE = false;
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete('reset');
+  window.history.replaceState({}, document.title, cleanUrl.toString());
   toast('Password updated.', 'success');
   closeAuthModal();
   await enterApp();
@@ -348,11 +356,21 @@ function logout() {
 
 // Supabase fires PASSWORD_RECOVERY when the user lands here from a reset-password email link.
 supabase.auth.onAuthStateChange((event) => {
-  if (event === 'PASSWORD_RECOVERY') openAuthModal('reset');
+  if (event === 'PASSWORD_RECOVERY') {
+    PASSWORD_RECOVERY_ACTIVE = true;
+    openAuthModal('reset');
+  }
 });
 
 async function tryAutoLogin() {
   const { data: { session } } = await supabase.auth.getSession();
+  // Recovery links carry this marker through the redirect. Keep the recovery
+  // form visible instead of routing a valid recovery session into the app.
+  if (session && (PASSWORD_RECOVERY_ACTIVE || new URLSearchParams(window.location.search).has('reset'))) {
+    PASSWORD_RECOVERY_ACTIVE = true;
+    openAuthModal('reset');
+    return;
+  }
   if (session) await enterApp();
 }
 
@@ -361,7 +379,14 @@ async function tryAutoLogin() {
 // ---------------------------------------------------------------------------
 async function enterApp() {
   const { data: profile, error } = await supabase.from('my_profile_view').select('*').single();
-  if (error || !profile) { toast('Could not load your account. Please try logging in again.', 'error'); await supabase.auth.signOut(); return; }
+  if (error || !profile) {
+    console.error('Could not load signed-in profile:', error);
+    toast(error
+      ? 'Could not load your account profile. Check that the database migration is applied and try again.'
+      : 'Your login exists, but no app profile is linked to it. Ask an Admin to add your profile.', 'error');
+    await supabase.auth.signOut();
+    return;
+  }
   if (!profile.active) { toast('Your account has been deactivated. Contact your manager.', 'error'); await supabase.auth.signOut(); return; }
 
   CURRENT_USER = { id: profile.id, email: profile.email, role: profile.role, branchId: profile.branch_id, fullName: profile.full_name };
@@ -376,7 +401,15 @@ async function enterApp() {
 
   const { data: branches } = await supabase.from('branches_view').select('*').order('name');
   BRANCHES = branches || [];
-  SELECTED_BRANCH = CURRENT_USER.role === 'MANAGER' ? (SELECTED_BRANCH || BRANCHES[0]?.id) : CURRENT_USER.branchId;
+  if (CURRENT_USER.role === 'MANAGER') {
+    SELECTED_BRANCH = BRANCHES.some((branch) => branch.id === SELECTED_BRANCH)
+      ? SELECTED_BRANCH
+      : (BRANCHES[0]?.id || null);
+    if (SELECTED_BRANCH) localStorage.setItem('dinah_selected_branch', SELECTED_BRANCH);
+    else localStorage.removeItem('dinah_selected_branch');
+  } else {
+    SELECTED_BRANCH = CURRENT_USER.branchId;
+  }
 
   buildSidebar();
   navigate('dashboard');
@@ -428,7 +461,12 @@ function branchSelectorHtml() {
   if (CURRENT_USER.role !== 'MANAGER') return '';
   return `<select onchange="onBranchChange(this.value)">${BRANCHES.map((b) => `<option value="${b.id}" ${b.id === SELECTED_BRANCH ? 'selected' : ''}>${escapeHtml(b.name)}</option>`).join('')}</select>`;
 }
-function onBranchChange(id) { SELECTED_BRANCH = id; localStorage.setItem('dinah_selected_branch', id); navigate(ACTIVE_TAB); }
+function onBranchChange(id) {
+  if (!BRANCHES.some((branch) => branch.id === id)) return;
+  SELECTED_BRANCH = id;
+  localStorage.setItem('dinah_selected_branch', id);
+  navigate(ACTIVE_TAB);
+}
 function statCard(label, value, warn) { return `<div class="stat-card ${warn ? 'warn' : ''}"><div class="label">${label}</div><div class="value">${value}</div></div>`; }
 
 // ---------------------------------------------------------------------------
