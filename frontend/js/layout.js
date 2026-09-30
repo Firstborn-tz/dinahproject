@@ -6,6 +6,7 @@ import { state, sanitizeId, saveSelectedBranch } from './state.js';
 import { icon } from './icons.js';
 import { escapeHtml, toast } from './ui.js';
 import { toggleTheme, updateThemeToggleIcons } from './theme.js';
+import { inactivitySessionExpired, startInactivitySession } from './session.js';
 
 import { renderManagerDashboard } from './pages/manager/dashboard.js';
 import { renderBranches } from './pages/manager/branches.js';
@@ -55,9 +56,14 @@ const CASHIER_TABS = [
 
 // ---- Enter the app after a successful login / session restore ----
 export async function enterApp() {
+  if (inactivitySessionExpired()) {
+    await supabase.auth.signOut();
+    sessionStorage.removeItem('dinah_last_activity');
+    return { ok: false, reason: 'You were signed out after 15 minutes without activity. Please log in again.' };
+  }
   const { data: profile, error } = await supabase.from('my_profile_view').select('*').single();
-  if (error || !profile) { toast('Could not load your account. Please try logging in again.', 'error'); await supabase.auth.signOut(); return; }
-  if (!profile.active) { toast('Your account has been deactivated. Contact your manager.', 'error'); await supabase.auth.signOut(); return; }
+  if (error || !profile) { await supabase.auth.signOut(); return { ok: false, reason: 'Your login worked, but this account is not connected to an app profile. Ask an admin to create or repair your staff profile.' }; }
+  if (!profile.active) { await supabase.auth.signOut(); return { ok: false, reason: 'This account is deactivated. Contact your manager.' }; }
 
   state.currentUser = { id: profile.id, email: profile.email, role: profile.role, branchId: profile.branch_id, fullName: profile.full_name };
 
@@ -85,6 +91,8 @@ export async function enterApp() {
 
   buildSidebar();
   navigate('dashboard');
+  startInactivitySession();
+  return { ok: true };
 }
 
 export function initials(name) {
@@ -104,7 +112,7 @@ export function buildUserMenu() {
       <div class="dropdown-menu-divider"></div>
       <button class="dropdown-item" onclick="navigate('profile');closeAllDropdowns();">${icon('user')}My Profile</button>
       <div class="dropdown-menu-divider"></div>
-      <button class="dropdown-item danger" onclick="logout()">${icon('log-out')}Logout</button>
+      <button class="dropdown-item danger logout-action" onclick="logout()">${icon('log-out')}<span>Log out</span></button>
     </div>`;
 }
 

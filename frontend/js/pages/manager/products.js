@@ -7,17 +7,18 @@ export async function renderProducts() {
   const main = document.getElementById('app-main');
   const { data: products, error } = await supabase.from('products_view').select('*').order('name');
   if (error) throw error;
-  main.innerHTML = `<h1 class="page-title">Products</h1><p class="page-sub">Add products directly to a branch. For packs, enter the total pack cost and number of sellable items; the unit cost is calculated automatically.</p>
+  main.innerHTML = `<h1 class="page-title">Products</h1><p class="page-sub">Choose whether each product is bought as a carton/box or as individual items. For packs, the system calculates cost per item.</p>
     <div class="panel"><div class="panel-header"><h3>Add Product</h3></div>
       <form onsubmit="return submitProduct(event)">
         <div class="form-row">
           <label>Branch<select id="p-branch" required>${state.branches.map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')}</select></label>
           <label>Name<input id="p-name" required /></label>
           <label>Type<select id="p-type"><option value="FOR_SALE">For Sale</option><option value="RESOURCE">Resource (consumed by services)</option></select></label>
+          <label>Buying format<select id="p-buy-mode" onchange="onProductBuyModeChange(this.value)"><option value="PACK">Packed together (carton / box)</option><option value="INDIVIDUAL">Individual items</option></select></label>
           <label>Category<input id="p-category" placeholder="e.g. Writing Materials" /></label>
           <label>Sellable unit<input id="p-unit" placeholder="piece / sheet" value="piece" /></label>
-          <label>Total buying price for pack<input id="p-buy" type="number" min="0" step="0.01" required /></label>
-          <label>Items in pack<input id="p-pack" type="number" min="1" step="1" value="1" required /></label>
+          <label><span id="p-buy-label">Buying price for one pack</span><input id="p-buy" type="number" min="0" step="0.01" required /></label>
+          <label id="p-pack-wrap">Items in one pack<input id="p-pack" type="number" min="1" step="1" value="1" required /></label>
           <label>Quantity received (individual items)<input id="p-qty" type="number" min="0" step="1" value="0" required /></label>
           <label>Selling Price (blank for resources)<input id="p-sell" type="number" min="0" /></label>
         </div>
@@ -57,5 +58,18 @@ export async function submitAssign(e) {
   return false;
 }
 
+export function onProductBuyModeChange(mode) {
+  const packed = mode === 'PACK';
+  const wrap = document.getElementById('p-pack-wrap');
+  const pack = document.getElementById('p-pack');
+  if (wrap) wrap.style.display = packed ? '' : 'none';
+  if (pack) { pack.required = packed; if (!packed) pack.value = '1'; }
+  const label = document.getElementById('p-buy-label');
+  if (label) label.textContent = packed ? 'Buying price for one pack' : 'Buying price per item';
+  const output = document.getElementById('p-unit-cost');
+  if (output) output.textContent = money(Number(val('p-buy')) / (packed ? Math.max(1, Number(val('p-pack'))) : 1));
+}
+
 window.submitProduct = submitProduct;
 window.submitAssign = submitAssign;
+window.onProductBuyModeChange = onProductBuyModeChange;

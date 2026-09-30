@@ -3,6 +3,7 @@ import { supabase } from './supabase-client.js';
 import { state } from './state.js';
 import { icon } from './icons.js';
 import { toast, friendlyError } from './ui.js';
+import { stopInactivitySession } from './session.js';
 
 // The whole authenticated app (sidebar + every admin/cashier page) is loaded
 // lazily, only when someone actually logs in. Visitors who just browse the
@@ -67,14 +68,28 @@ async function handleLogin(e) {
   const errBox = document.getElementById('login-error');
   const submitBtn = document.getElementById('login-submit-btn');
   errBox.classList.add('hidden'); submitBtn.disabled = true; submitBtn.textContent = 'Logging in…';
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    errBox.textContent = 'Invalid email or password.'; errBox.classList.remove('hidden');
+  stopInactivitySession();
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      errBox.textContent = error.message || 'Could not sign in. Check your email and password.';
+      errBox.classList.remove('hidden');
+      submitBtn.disabled = false; submitBtn.textContent = 'Login';
+      return;
+    }
+    const result = await goToApp();
+    if (!result?.ok) {
+      errBox.textContent = result?.reason || 'Login succeeded, but the app could not open. Contact an admin.';
+      errBox.classList.remove('hidden');
+      submitBtn.disabled = false; submitBtn.textContent = 'Login';
+      return;
+    }
+    closeAuthModal();
+  } catch (error) {
+    errBox.textContent = friendlyError(error);
+    errBox.classList.remove('hidden');
     submitBtn.disabled = false; submitBtn.textContent = 'Login';
-    return;
   }
-  closeAuthModal();
-  await goToApp();
 }
 
 async function handleForgotPassword(e) {
@@ -127,12 +142,13 @@ async function handleResetPassword(e) {
   await goToApp();
 }
 
-export function logout() {
-  supabase.auth.signOut();
+export async function logout(reason = 'manual') {
+  stopInactivitySession();
+  await supabase.auth.signOut();
   state.currentUser = null; state.cart = [];
   document.getElementById('app-view').classList.add('hidden');
   document.getElementById('public-site').classList.remove('hidden');
-  toast('Logged out.', 'info');
+  toast(reason === 'idle' ? 'You were logged out after 15 minutes without activity.' : 'Logged out.', 'info');
 }
 
 // ---------------------------------------------------------------------------
@@ -173,7 +189,10 @@ supabase.auth.onAuthStateChange((event) => {
 export async function tryAutoLogin() {
   if (isRecoveryUrl() || recoveryMode) { openAuthModal('reset'); return; } // never auto-enter the app during recovery
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) await goToApp();
+  if (session) {
+    const result = await goToApp();
+    if (!result?.ok) toast(result?.reason || 'Could not open your account. Please sign in again.', 'error');
+  }
 }
 
 // Referenced from inline onclick="..." in the HTML this module generates.
