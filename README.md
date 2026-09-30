@@ -1,14 +1,74 @@
 # Dinah Stationaries — Production Build (Supabase + Vercel)
 
-Developed by Progr_Willy
+Developed by Progr_Willy — this build by Claude.
 
 This is a full architecture change from the earlier Express/JSON-file
-prototype: the backend is now Supabase (Postgres + Auth + Row Level
+prototype: the backend is now **Supabase** (Postgres + Auth + Row Level
 Security + Edge Functions), and the frontend is a static site built for
 **Vercel**. No Node server to run or keep alive — Supabase and Vercel both
 host it for you on free tiers.
 
-## Latest round of changes
+## Code layout — one file per page
+
+`frontend/js/` is now real ES modules (native browser `import`/`export`,
+still zero build step — Vercel just serves the files as-is):
+
+```
+js/
+  state.js            shared app state (who's logged in, selected branch, cart...)
+  supabase-client.js  the Supabase client (sessionStorage-based sessions)
+  icons.js            every SVG icon
+  theme.js            light/dark mode
+  ui.js               toasts, confirm/prompt dialogs, tables, formatting, dropdowns
+  auth.js             login, forgot/reset password, logout
+  landing.js          the public site
+  layout.js           sidebar, topbar, router — one entry per page file below
+  main.js             entry point loaded by index.html
+  pages/
+    manager/          dashboard.js, branches.js, users.js, products.js,
+                       requests.js, inventory.js, resources.js, returns.js,
+                       cash-collection.js, reports.js, audit.js, settings.js
+    cashier/          dashboard.js, pos.js, resources.js, requests.js, daily-closing.js
+    shared/           services.js, sales.js, profile.js  (used by both roles)
+```
+Each page file only imports what it needs and attaches its own `onclick`
+handlers to `window` at the bottom — open any one file and everything about
+that page is right there.
+
+## This round's fixes
+
+- **"invalid input syntax for type uuid: undefined"** — root-caused: several
+  pages queried by branch before a branch existed or was selected (a fresh
+  install starts with zero branches). Every branch-scoped page now calls a
+  shared `resolveBranchId()` guard first and shows a friendly message
+  ("Create a branch first") instead of firing a broken query.
+- **Mobile top bars and the dashboard chart** — the public nav, app topbar,
+  and "Sales by Branch" chart are now properly responsive: the topbar
+  collapses to icon-only on phones, the chart scrolls horizontally instead
+  of squashing, and touch targets are back to 44px+.
+- **Faster loads everywhere** — the landing page's four data requests
+  (settings/products/services/branches) now fire in parallel instead of one
+  after another; the entire authenticated app (sidebar + every admin/cashier
+  page) now only downloads *after* someone logs in, so a visitor just
+  browsing the landing page loads a much smaller page; fonts get an extra
+  `preconnect`; `js/main.js` is preloaded.
+- **The centered loading animation you specified** — shown full-page on
+  first load (`#page-loader`), and reused (smaller) inside any panel/table
+  while its data is fetching.
+- **Password reset links now actually work** — see step 1.6 above; this
+  needed both a required one-time Supabase dashboard setting and a code fix
+  (the app was letting the temporary recovery session log the user straight
+  into the dashboard instead of showing the "set a new password" form;
+  expired/used links now show a clear message instead of doing nothing).
+- **Admins can reset a Cashier's password directly** — new **Reset
+  Password** button on the Users page (Admin sets it and shares it with
+  them directly) alongside **Email Reset Link** (sends the normal
+  self-service email instead).
+- **Branches now require a Google Maps link**, and the landing page has a
+  new **Our Branches** section listing each one with a "View on Map"
+  button. Existing branches (if any) show "Missing" until edited.
+
+
 
 - **Light/dark theme** — a toggle button (sun/moon icon) in the public nav
   and the app topbar. Follows your OS preference automatically until you
@@ -78,6 +138,9 @@ that statement** — much easier than debugging blind.
    entire contents, paste into the editor, and click **Run**.
 3. You should see "Success. No rows returned." Check **Table Editor** on the
    left — you should see `branches`, `profiles`, `products`, `sales`, etc.
+4. Run `supabase/migrations/0002_branch_map_link.sql` the same way (new
+   query, paste, Run). This adds the required Google Maps link per branch
+   and the public branch listing used on the landing page.
 
 ### 1.3 Get your API keys
 1. **Project Settings** (gear icon) → **API**.
@@ -100,11 +163,13 @@ supabase login
 cd dinah-supabase
 supabase link --project-ref YOUR-PROJECT-REF
 supabase functions deploy create-user
+supabase functions deploy admin-reset-password
 ```
 (Find `YOUR-PROJECT-REF` in your project URL, or under Project Settings.)
 No extra environment variables needed — `SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY` are automatically available inside every Edge
-Function.
+Function. The second function is what lets an Admin reset a Cashier's
+password directly from the **Users** page.
 
 ### 1.5 Bootstrap your first Admin account
 Normal user creation happens through the app (a Manager creates other users
@@ -124,7 +189,26 @@ created manually, once:
    an Admin, and create every other user (Admins and Cashiers) from the
    **Users** page from now on.
 
-### 1.6 Email delivery for password reset (Brevo)
+### 1.6 Make password-reset links actually work (required)
+The reset email is sent correctly, but Supabase will silently refuse to
+complete the login if the link's destination isn't on its allow-list — this
+is almost always why a reset link "doesn't work." Fix it once:
+
+1. Supabase Dashboard → **Authentication** → **URL Configuration**.
+2. Set **Site URL** to your real deployed frontend, e.g.
+   `https://your-project.vercel.app` (or your custom domain once you have one).
+3. Under **Redirect URLs**, add the same URL, ideally as a wildcard so it
+   still works after preview deploys: `https://your-project.vercel.app/**`.
+4. Save. Test the whole flow end to end: Login screen → Forgot Password →
+   check the email → click the link → you should land back on the site with
+   a "Set a New Password" form open automatically, not the dashboard.
+
+If you ever see the reset link land you on the dashboard instead of the
+reset form, or show an "invalid or expired" toast, it's one of: this step
+wasn't done, the link is genuinely more than an hour old, or it was already
+used once (each link works only one time).
+
+### 1.7 Email delivery for password reset (Brevo)
 Supabase sends password-reset (and login-related) emails out of the box
 using its own limited email service. To send them through **Brevo**
 instead — for both password reset and future auth emails:

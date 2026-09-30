@@ -238,7 +238,7 @@ tr:hover td{background:var(--surface-hover);}
 
 .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px;}
 .form-row label{font-size:.82rem;font-weight:600;display:block;}
-.form-row input,.form-row select,.form-row textarea{width:100%;margin-top:5px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:.92rem;min-height:40px;font-family:inherit;background:var(--input-bg);color:var(--text);}
+.form-row input,.form-row select,.form-row textarea{width:100%;margin-top:5px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:16px;min-height:44px;font-family:inherit;background:var(--input-bg);color:var(--text);}
 
 .pos-layout{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;}
 .pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
@@ -285,7 +285,7 @@ tr:hover td{background:var(--surface-hover);}
 .confirm-modal p{font-size:.9rem;}
 .confirm-modal form{text-align:left;margin-top:16px;}
 .confirm-modal form label{display:block;font-weight:600;font-size:.82rem;margin-bottom:12px;}
-.confirm-modal form input,.confirm-modal form select,.confirm-modal form textarea{width:100%;margin-top:5px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:.92rem;min-height:40px;font-family:inherit;background:var(--input-bg);color:var(--text);}
+.confirm-modal form input,.confirm-modal form select,.confirm-modal form textarea{width:100%;margin-top:5px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:16px;min-height:44px;font-family:inherit;background:var(--input-bg);color:var(--text);}
 .confirm-actions{display:flex;gap:10px;margin-top:20px;}
 .confirm-actions .btn{flex:1;}
 
@@ -388,3 +388,129 @@ select{
 
 .select-branch{border:1px solid var(--border);border-radius:9px;padding:8px 34px 8px 14px;font-size:.85rem;font-weight:600;background-color:var(--input-bg);color:var(--text);min-height:38px;margin-left:10px;vertical-align:middle;box-shadow:var(--shadow);}
 .select-branch:hover{border-color:var(--blue);}
+
+/* ===================================================================== */
+/* Loading animation (as supplied) + full-page / in-page placement        */
+/* ===================================================================== */
+.loader {
+  width: 50px;
+  aspect-ratio: 1;
+  display: grid;
+  border: 4px solid #0000;
+  border-radius: 50%;
+  border-right-color: #25b09b;
+  animation: l15 1s infinite linear;
+}
+.loader::before,
+.loader::after {
+  content: "";
+  grid-area: 1/1;
+  margin: 2px;
+  border: inherit;
+  border-radius: 50%;
+  animation: l15 2s infinite;
+}
+.loader::after {
+  margin: 8px;
+  animation-duration: 3s;
+}
+@keyframes l15 {
+  100% { transform: rotate(1turn); }
+}
+/* Centered in the middle of the whole page while it first loads */
+.page-loader{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .35s ease, visibility .35s ease;}
+.page-loader.done{opacity:0;visibility:hidden;pointer-events:none;}
+/* Centered inside the content area while a page/tab loads */
+.loader-wrap{display:flex;align-items:center;justify-content:center;min-height:45vh;width:100%;}
+.panel .loader-wrap{min-height:180px;}
+
+/* ===================================================================== */
+/* Branch cards on the landing page                                       */
+/* ===================================================================== */
+.branch-card{display:flex;flex-direction:column;align-items:flex-start;}
+.branch-card p{margin-bottom:16px;}
+.branch-map-btn{margin-top:auto;gap:6px;}
+.branch-map-btn .icon{width:16px;height:16px;}
+
+.pos-search{width:100%;max-width:340px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;margin-bottom:16px;min-height:44px;background:var(--input-bg);color:var(--text);font-size:1rem;}
+
+/* ===================================================================== */
+/* Mobile polish: top bars, hamburger menu, charts, tables                */
+/* ===================================================================== */
+.bars-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.bars .bar-col{min-width:56px;}
+.bars .bar-label{max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+@media (max-width:900px){
+  .nav-inner{padding:10px 0;}
+  .brand{font-size:.98rem;}
+}
+
+@media (max-width:680px){
+  /* Public site top bar */
+  .container{padding:0 16px;}
+  .nav-inner{gap:8px;}
+  .brand{font-size:.9rem;gap:6px;}
+  .brand-icon{font-size:1.2rem;}
+  .nav-actions{gap:8px;}
+  .nav-actions .btn{padding:8px 14px;min-height:40px;font-size:.88rem;}
+  .theme-toggle{width:40px;height:40px;}
+  .hamburger{width:40px;height:40px;justify-content:center;background:rgba(255,255,255,.08);border-radius:10px;}
+  .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;gap:0;background:var(--navy-deep);padding:8px 16px 14px;border-top:1px solid rgba(255,255,255,.08);box-shadow:0 18px 30px rgba(0,0,0,.35);}
+  .nav-links.open{display:flex;}
+  .nav-links a{padding:13px 4px;font-size:1rem;border-bottom:1px solid rgba(255,255,255,.06);}
+  .nav-links a:last-child{border-bottom:none;}
+
+  /* App top bar: keep it to one compact row */
+  .app-topbar{padding:8px 12px;gap:8px;}
+  .app-topbar-left .brand{font-size:.85rem;}
+  .app-topbar-left .brand span:not(.brand-icon){display:none;}   /* icon only */
+  .app-topbar-right{gap:8px;}
+  .sync-badge{font-size:0;}                                      /* show just the dot */
+  .sync-badge::first-letter{font-size:1.1rem;}
+  .dropdown-name{display:none;}
+  .dropdown-trigger{padding:5px 8px;}
+  .dropdown-menu{right:-4px;min-width:210px;max-width:calc(100vw - 24px);}
+
+  /* Page content */
+  .hero{padding:64px 0 56px;}
+  .hero-copy h1{font-size:1.9rem;}
+  .section{padding:52px 0;}
+  .section-title{font-size:1.6rem;}
+  .page-title{font-size:1.35rem;display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+  .select-branch{margin-left:0;}
+  .panel{padding:16px;}
+  .panel-header{flex-direction:column;align-items:flex-start;}
+  .stat-card{padding:14px;}
+  .stat-card .value{font-size:1.25rem;}
+  .bars{height:120px;gap:10px;}
+  .form-row{grid-template-columns:1fr;}
+  th,td{padding:9px 8px;}
+  .pos-layout{gap:14px;}
+}
+
+/* ===================================================================== */
+/* Full-device support: hard safety net against horizontal scroll bugs,   */
+/* and a proper actionable empty-state (used by resolveBranchId in ui.js) */
+/* ===================================================================== */
+html,body{max-width:100%;overflow-x:hidden;}
+img,svg{max-width:100%;}
+* { -webkit-tap-highlight-color: transparent; }
+
+.branch-empty-state{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px 24px;text-align:center;box-shadow:var(--shadow);max-width:420px;margin:20px auto;}
+.branch-empty-state h3{margin-bottom:6px;}
+.branch-empty-state p{margin-bottom:18px;}
+.branch-empty-state .confirm-icon{margin-bottom:16px;}
+
+@media (max-width:480px){
+  .branch-empty-state{padding:28px 18px;margin:12px auto;}
+  .confirm-modal{padding:24px 20px;}
+  .toast-container{bottom:8px;right:8px;left:8px;}
+  .dropdown-menu{left:0;right:auto;width:calc(100vw - 24px);}
+}
+
+/* Larger tap targets throughout on touch devices */
+@media (hover:none) and (pointer:coarse){
+  .btn,.link-btn,.dropdown-item,.app-sidebar button,select,input,textarea{min-height:44px;}
+  .cart-qty-controls button{width:36px;height:36px;}
+}
