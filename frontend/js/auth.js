@@ -10,7 +10,7 @@ import { stopInactivitySession } from './session.js';
 // landing page never download any of it, which makes the public page much faster.
 async function goToApp() {
   const { enterApp } = await import('./layout.js');
-  await enterApp();
+  return enterApp();
 }
 
 export function wireAuthModalTriggers() {

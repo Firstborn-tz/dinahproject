@@ -27,7 +27,7 @@ export async function renderCashCollection() {
       ${renderTable([
         { key: 'business_date', label: 'Date' }, { key: 'expected_cash', label: 'Expected', render: (r) => money(r.expected_cash) },
         { key: 'collected_amount', label: 'Collected', render: (r) => money(r.collected_amount) },
-        { key: 'difference', label: 'Difference', render: (r) => `<span style="color:${r.difference == 0 ? 'var(--green)' : 'var(--red)'}">${money(r.difference)}</span>` }
+        { key: 'difference', label: 'Difference', render: (r) => `<span style="color:${r.difference == 0 ? 'var(--success-ink)' : 'var(--danger-ink)'}">${money(r.difference)}</span>` }
       ], collections, 'No collections recorded yet.')}
     </div>`;
 }

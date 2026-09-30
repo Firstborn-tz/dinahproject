@@ -10,6 +10,6 @@ export async function renderReports() {
   document.getElementById('report-table').innerHTML = renderTable([
     { key: 'product', label: 'Product' }, { key: 'qty_sold', label: 'Qty Sold' },
     { key: 'revenue', label: 'Revenue', render: (r) => money(r.revenue) }, { key: 'cost', label: 'Cost', render: (r) => money(r.cost) },
-    { key: 'profit', label: 'Profit', render: (r) => `<span style="color:${r.profit >= 0 ? 'var(--green)' : 'var(--red)'}">${money(r.profit)}</span>` }
+    { key: 'profit', label: 'Profit', render: (r) => `<span style="color:${r.profit >= 0 ? 'var(--success-ink)' : 'var(--danger-ink)'}">${money(r.profit)}</span>` }
   ], rows, 'No sales recorded yet.');
 }
