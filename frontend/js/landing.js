@@ -9,7 +9,19 @@ const SERVICE_ICONS = { Printing: 'printer', Photocopying: 'copy', 'Photo Printi
 const PRODUCT_ICONS = { 'Writing Materials': 'pencil', 'Paper Products': 'file-text', 'Filing & Organization': 'folder', 'Office Supplies': 'paperclip', Technology: 'hard-drive' };
 
 export function wireLandingNav() {
-  document.getElementById('hamburger').addEventListener('click', () => document.getElementById('nav-links').classList.toggle('open'));
+  const menu = document.getElementById('nav-links');
+  const toggle = document.getElementById('hamburger');
+  toggle.addEventListener('click', () => {
+    const open = menu.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+  menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
+    menu.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+  }));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') { menu.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); }
+  });
   document.getElementById('nav-theme-toggle')?.addEventListener('click', toggleTheme);
 }
 

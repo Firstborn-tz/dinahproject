@@ -142,16 +142,26 @@ export function promptDialog({ title, message = '', fields, confirmLabel = 'Subm
 // Dropdown menus (topbar user menu, and any future menu button)
 // ---------------------------------------------------------------------------
 export function closeAllDropdowns(except) {
-  document.querySelectorAll('.dropdown.open').forEach((d) => { if (d !== except) d.classList.remove('open'); });
+  document.querySelectorAll('.dropdown.open').forEach((d) => {
+    if (d === except) return;
+    d.classList.remove('open');
+    d.querySelector('.dropdown-trigger')?.setAttribute('aria-expanded', 'false');
+  });
 }
 export function toggleDropdown(el) {
   const dropdown = el.closest('.dropdown');
   const willOpen = !dropdown.classList.contains('open');
   closeAllDropdowns(willOpen ? dropdown : null);
   dropdown.classList.toggle('open', willOpen);
+  el.setAttribute('aria-expanded', String(willOpen));
 }
 document.addEventListener('click', (e) => { if (!e.target.closest('.dropdown')) closeAllDropdowns(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAllDropdowns(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const trigger = document.querySelector('.dropdown.open .dropdown-trigger');
+  closeAllDropdowns();
+  trigger?.focus();
+});
 
 // These two are only ever invoked from inline onclick="..." in generated
 // HTML, so they need to be reachable on window (see main.js for the full

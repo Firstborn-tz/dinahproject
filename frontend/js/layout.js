@@ -104,15 +104,18 @@ export function initials(name) {
 export function buildUserMenu() {
   const u = state.currentUser;
   document.getElementById('user-menu').innerHTML = `
-    <button class="dropdown-trigger" onclick="toggleDropdown(this)">
+    <button class="dropdown-trigger" onclick="toggleDropdown(this)" aria-haspopup="menu" aria-expanded="false" aria-controls="account-menu-content">
       <span class="avatar-badge">${escapeHtml(initials(u.fullName || u.email))}</span>
       <span class="dropdown-name">${escapeHtml(u.fullName || u.email)}</span>
       ${icon('chevron-down', 'icon chevron')}
     </button>
-    <div class="dropdown-menu">
-      <div class="dropdown-menu-label">${escapeHtml(u.role === 'MANAGER' ? 'Admin' : 'Cashier')} · ${escapeHtml(u.email)}</div>
+    <div class="dropdown-menu" id="account-menu-content" role="menu" aria-label="Account menu">
+      <div class="dropdown-profile-card">
+        <span class="dropdown-profile-avatar">${escapeHtml(initials(u.fullName || u.email))}</span>
+        <span class="dropdown-profile-copy"><strong>${escapeHtml(u.fullName || 'Staff account')}</strong><span>${escapeHtml(u.email)}</span><span class="dropdown-role-pill">${u.role === 'MANAGER' ? 'Admin' : 'Cashier'}</span></span>
+      </div>
       <div class="dropdown-menu-divider"></div>
-      <button class="dropdown-item" onclick="navigate('profile');closeAllDropdowns();">${icon('user')}My Profile</button>
+      <button class="dropdown-item" role="menuitem" onclick="closeAllDropdowns();navigate('profile');">${icon('user')}My Profile &amp; settings</button>
     </div>`;
 }
 

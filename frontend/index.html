@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dinah Stationaries | Stationery, Printing & Document Services</title>
-<meta name="description" content="Dinah Stationaries provides quality stationery products, printing, photocopying, binding, lamination and professional document services." />
+<title>Dinah Stationaries | Everything for Work, Study &amp; Creativity</title>
+<meta name="description" content="Find stationery, printing and document services for school, work and everyday creativity at Dinah Stationaries." />
+<meta property="og:title" content="Dinah Stationaries | Everything for work, study and creativity" />
+<meta property="og:description" content="Stationery, printing and document services for students, offices and businesses." />
+<meta property="og:type" content="website" />
 <meta name="theme-color" content="#17324D" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b1420" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%2317324D'/><path d='M9 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8l-5-5H9z' fill='none' stroke='%23FBBF24' stroke-width='1.6' stroke-linejoin='round'/><path d='M14 3v5h5' fill='none' stroke='%23FBBF24' stroke-width='1.6' stroke-linejoin='round'/></svg>" />
@@ -50,7 +53,7 @@
       <div class="nav-actions">
         <button class="theme-toggle" id="nav-theme-toggle" aria-label="Toggle dark mode"></button>
         <button class="btn btn-primary" id="login-open-btn">Login</button>
-        <button class="hamburger" id="hamburger" data-icon="menu" aria-label="Menu"></button>
+        <button class="hamburger" id="hamburger" data-icon="menu" aria-label="Menu" aria-expanded="false" aria-controls="nav-links"></button>
       </div>
     </div>
   </header>
@@ -59,19 +62,20 @@
     <div class="hero-bg" aria-hidden="true"></div>
     <div class="container hero-inner">
       <div class="hero-copy reveal">
-        <span class="eyebrow">Stationery · Printing · Document Services</span>
-        <h1>Your Trusted Stationery &amp; Document Service Partner</h1>
-        <p>Quality stationery products, professional printing, photocopying, binding, lamination and document services — all in one convenient place.</p>
+        <span class="eyebrow"><span class="eyebrow-dot"></span> Your everyday stationery destination</span>
+        <h1>Big ideas start with the <em>right supplies.</em></h1>
+        <p>From classroom essentials to polished business documents, find the tools and friendly services that keep your day moving.</p>
         <div class="hero-ctas">
-          <a href="#services" class="btn btn-primary btn-lg">Explore Our Services</a>
-          <a href="#location" class="btn btn-outline btn-lg">Visit Our Office</a>
+          <a href="#products" class="btn btn-primary btn-lg">Explore stationery <span aria-hidden="true">&#8599;</span></a>
+          <a href="#location" class="btn btn-outline btn-lg">Find a branch</a>
         </div>
+        <div class="hero-proof"><span class="hero-proof-icons"><span>&#9998;</span><span>&#9638;</span><span>&#10022;</span></span><span>For school, work &amp; everything in between</span></div>
       </div>
-      <div class="hero-art reveal" aria-hidden="true">
-        <span class="hero-art-item" data-icon="book"></span>
-        <span class="hero-art-item" data-icon="pencil"></span>
-        <span class="hero-art-item" data-icon="printer"></span>
-        <span class="hero-art-item" data-icon="paperclip"></span>
+      <div class="hero-visual reveal">
+        <div class="hero-photo-frame"><img src="assets/pens-display.jpg" alt="Colorful pens and stationery supplies" fetchpriority="high" /></div>
+        <div class="hero-sticker hero-sticker-top"><span class="sticker-spark">&#10022;</span><span>Make room<br />for ideas</span></div>
+        <div class="hero-sticker hero-sticker-bottom"><span class="sticker-icon" data-icon="printer"></span><span><strong>One helpful stop</strong><br />Products &amp; services</span></div>
+        <div class="hero-orbit" aria-hidden="true"></div>
       </div>
     </div>
   </section>
@@ -88,17 +92,13 @@
 
   <section class="section section-alt">
     <div class="container">
-      <h2 class="section-title reveal">Inside Dinah Stationaries</h2>
-      <p class="section-subtitle reveal">Add your own shop photos here — see the README for exact instructions (30 seconds, no code experience needed).</p>
+      <h2 class="section-title reveal">Tools for every idea</h2>
+      <p class="section-subtitle reveal">A little inspiration for learning, creating and getting things done.</p>
       <div class="grid grid-3" id="gallery-grid">
-        <!--
-          PHOTO SLOT 1 of 3 — replace the whole <div class="photo-slot">...</div>
-          with: <img class="photo-slot" src="YOUR-PHOTO-URL" alt="Dinah Stationaries shop front" />
-          See README.md -> "Adding your own photos" for where to get a URL.
-        -->
-        <div class="photo-slot reveal"><span class="photo-slot-icon" data-icon="briefcase"></span><span class="photo-slot-label">Shop Front</span></div>
-        <div class="photo-slot reveal"><span class="photo-slot-icon" data-icon="package"></span><span class="photo-slot-label">Product Shelves</span></div>
-        <div class="photo-slot reveal"><span class="photo-slot-icon" data-icon="printer"></span><span class="photo-slot-label">Printing Counter</span></div>
+        
+        <article class="inspiration-card reveal"><img src="assets/school-stationery.jpg" alt="Creative stationery and paper tools arranged on a desk" loading="lazy" /><div class="inspiration-caption"><span>01 / CREATE</span><h3>Make something wonderful</h3></div></article>
+        <article class="inspiration-card inspiration-card-tall reveal"><img src="assets/notebook-desk.jpg" alt="Open notebook and pencils ready for notes" loading="lazy" /><div class="inspiration-caption"><span>02 / PLAN</span><h3>Give your ideas a page</h3></div></article>
+        <article class="inspiration-card reveal"><img src="assets/study-writing.jpg" alt="Writing tools for study and daily planning" loading="lazy" /><div class="inspiration-caption"><span>03 / GET IT DONE</span><h3>Everyday essentials, close by</h3></div></article>
       </div>
     </div>
   </section>
@@ -119,8 +119,8 @@
 
   <section class="section section-alt" id="products">
     <div class="container">
-      <h2 class="section-title reveal">Stationery Products Available</h2>
-      <p class="section-subtitle reveal">A few of our popular items — visit us in-store for the full catalogue.</p>
+      <h2 class="section-title reveal">Ready for your next big thing?</h2>
+      <p class="section-subtitle reveal">Browse a few favourites, then visit a branch to see what is in stock.</p>
       <div class="grid grid-4" id="products-grid">
         <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
       </div>
@@ -129,7 +129,7 @@
 
   <section class="section" id="services">
     <div class="container">
-      <h2 class="section-title reveal">Our Professional Services</h2>
+      <h2 class="section-title reveal">Let us help with the details.</h2>
       <div class="grid grid-4" id="services-grid">
         <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
       </div>

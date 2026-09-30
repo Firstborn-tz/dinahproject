@@ -284,34 +284,11 @@ just Vercel instead of Netlify).
 
 ---
 
-## Adding your own photos
+## Landing page photos
 
-The landing page ships with three placeholder "photo slots" (in the
-**Inside Dinah Stationaries** section) styled to look intentional, not
-broken — but real photos of your actual shop will convert far better than
-any stock photo. To swap one in:
+The landing page includes locally bundled illustrative stationery photography. These are inspiration images, not photographs of Dinah Stationaries' premises. Photo sources and Unsplash license links are listed in `frontend/assets/IMAGE_CREDITS.md`.
 
-1. Open `frontend/index.html`, find the `<!-- PHOTO SLOT ... -->` comments.
-2. Replace the whole `<div class="photo-slot">...</div>` with:
-   ```html
-   <img class="photo-slot" src="YOUR-IMAGE-URL" alt="Description of the photo" />
-   ```
-3. **Where to get a URL:**
-   - **Best option:** upload your own shop photo to
-     [postimages.org](https://postimages.org) (free, no account needed) or
-     any image host, and use the direct link it gives you.
-   - **No shop photo yet:** [unsplash.com](https://unsplash.com) and
-     [pexels.com](https://pexels.com) are both free for commercial use, no
-     attribution required — search "stationery", "office supplies", or
-     "notebook desk", open a photo you like, right-click → Copy Image
-     Address, and use that as your `src`.
-4. Commit and push — Vercel redeploys automatically.
-
-I didn't hardcode any stock photo URLs into the page myself: I can't verify
-a specific web image's license from here, and putting an unlicensed photo
-into your live commercial site is a real risk I'd rather you avoid than
-inherit from me.
-
+To show the real shop, replace the image files in `frontend/assets/` with your own photos while keeping the same filenames, or update the matching `src` paths in `frontend/index.html`. Keep wide photos for the hero and gallery images in landscape orientation for best results on phones and computers.
 ---
 
 ## What's genuinely different from the earlier Express version
