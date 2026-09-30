@@ -69,6 +69,8 @@ export async function enterApp() {
 
   document.getElementById('public-site').classList.add('hidden');
   document.getElementById('app-view').classList.remove('hidden');
+  const logoutIcon = document.querySelector('.app-logout-icon');
+  if (logoutIcon && !logoutIcon.querySelector('svg')) logoutIcon.innerHTML = icon('log-out');
   buildUserMenu();
   updateSyncBadge();
   window.addEventListener('online', updateSyncBadge);
@@ -111,8 +113,6 @@ export function buildUserMenu() {
       <div class="dropdown-menu-label">${escapeHtml(u.role === 'MANAGER' ? 'Admin' : 'Cashier')} · ${escapeHtml(u.email)}</div>
       <div class="dropdown-menu-divider"></div>
       <button class="dropdown-item" onclick="navigate('profile');closeAllDropdowns();">${icon('user')}My Profile</button>
-      <div class="dropdown-menu-divider"></div>
-      <button class="dropdown-item danger logout-action" onclick="logout()">${icon('log-out')}<span>Log out</span></button>
     </div>`;
 }
 
