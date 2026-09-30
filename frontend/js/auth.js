@@ -83,11 +83,26 @@ async function handleForgotPassword(e) {
   const msgBox = document.getElementById('forgot-message');
   const btn = document.getElementById('forgot-submit-btn');
   btn.disabled = true; btn.textContent = 'Sending…';
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  const redirectTo = getAppRedirectUrl();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   msgBox.classList.remove('hidden');
   if (error) { msgBox.className = 'form-error'; msgBox.textContent = friendlyError(error); }
-  else { msgBox.className = 'form-success'; msgBox.textContent = 'If that email has an account, a reset link is on its way.'; }
+  else {
+    msgBox.className = 'form-success';
+    msgBox.textContent = `If that email has an account, a reset link is on its way. The link will open ${redirectTo}.`;
+  }
   btn.disabled = false; btn.textContent = 'Send Reset Link';
+}
+
+export function getAppRedirectUrl() {
+  const configured = typeof window.APP_URL === 'string' ? window.APP_URL.trim() : '';
+  try {
+    const target = new URL(configured || window.location.origin);
+    if (!['http:', 'https:'].includes(target.protocol)) throw new Error('Invalid app URL protocol');
+    return target.origin;
+  } catch {
+    return window.location.origin;
+  }
 }
 
 async function handleResetPassword(e) {
@@ -97,8 +112,14 @@ async function handleResetPassword(e) {
   const errBox = document.getElementById('reset-error');
   errBox.classList.add('hidden');
   if (pass !== confirmPass) { errBox.textContent = 'Passwords do not match.'; errBox.classList.remove('hidden'); return; }
+  const submit = document.querySelector('#reset-form button[type="submit"]');
+  submit.disabled = true; submit.textContent = 'Updating password…';
   const { error } = await supabase.auth.updateUser({ password: pass });
-  if (error) { errBox.textContent = friendlyError(error); errBox.classList.remove('hidden'); return; }
+  if (error) {
+    errBox.textContent = friendlyError(error); errBox.classList.remove('hidden');
+    submit.disabled = false; submit.textContent = 'Update Password';
+    return;
+  }
   recoveryMode = false;
   window.history.replaceState({}, '', window.location.pathname);
   toast('Password updated. You are now logged in.', 'success');

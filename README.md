@@ -203,6 +203,13 @@ is almost always why a reset link "doesn't work." Fix it once:
    check the email → click the link → you should land back on the site with
    a "Set a New Password" form open automatically, not the dashboard.
 
+The frontend uses `window.APP_URL` in `frontend/index.html` as the reset-link
+destination when it is set; otherwise it uses the current site origin. Set it
+to the deployed site origin before publishing (for example,
+`https://your-project.vercel.app`) and add that exact origin to Supabase
+**Redirect URLs**. Do not use `localhost` for real users: it points to the
+device that opens the email, not the computer running the development server.
+
 If you ever see the reset link land you on the dashboard instead of the
 reset form, or show an "invalid or expired" toast, it's one of: this step
 wasn't done, the link is genuinely more than an hour old, or it was already

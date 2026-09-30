@@ -1,5 +1,6 @@
 // js/pages/manager/users.js
 import { supabase } from '../../supabase-client.js';
+import { getAppRedirectUrl } from '../../auth.js';
 import { escapeHtml, badge, renderTable, toast, friendlyError, functionError, val, confirmDialog, promptDialog } from '../../ui.js';
 
 function randomPassword() {
@@ -100,7 +101,7 @@ export async function resetUserPassword(userId, name) {
 
 // Alternative: send them the normal self-service reset email instead.
 export async function emailResetLink(email) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: getAppRedirectUrl() });
   if (error) return toast(friendlyError(error), 'error');
   toast(`Reset link sent to ${email}.`, 'success');
 }
