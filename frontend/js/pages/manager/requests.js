@@ -6,13 +6,13 @@ export async function renderRequests() {
   const main = document.getElementById('app-main');
   const { data: requests, error } = await supabase.from('product_requests_view').select('*').order('created_at', { ascending: false });
   if (error) throw error;
-  main.innerHTML = `<h1 class="page-title">Product Requests</h1><p class="page-sub">Cashiers request new products; you set the buying price before approval.</p>
+  main.innerHTML = `<h1 class="page-title">Delivered Stock Pending</h1><p class="page-sub">Cashiers register products physically brought to a branch. Enter the total buying price paid; for packs this is the whole carton or box cost, and the system calculates cost per item.</p>
     <div class="panel">${renderTable([
-      { key: 'product_name', label: 'Product' }, { key: 'selling_price', label: 'Requested Selling Price', render: (r) => money(r.selling_price) },
-      { key: 'quantity', label: 'Qty' },
+      { key: 'product_name', label: 'Product' }, { key: 'intake_type', label: 'Purchase type' }, { key: 'items_per_pack', label: 'Items per pack' },
+      { key: 'quantity', label: 'Received qty' }, { key: 'selling_price', label: 'Selling price / item', render: (r) => money(r.selling_price) },
       { key: 'status', label: 'Status', render: (r) => badge(r.status, r.status === 'PENDING' ? 'yellow' : r.status === 'APPROVED' ? 'green' : 'red') },
       { key: 'actions', label: '', render: (r) => r.status === 'PENDING' ? `
-          <input type="number" placeholder="Buying price" id="buy-${r.id}" style="width:110px;padding:6px;border:1px solid var(--border);border-radius:6px" />
+          <input type="number" min="0" step="0.01" placeholder="Total pack cost" id="buy-${r.id}" style="width:130px;padding:6px;border:1px solid var(--border);border-radius:6px" />
           <button class="btn btn-success btn-sm" onclick="approveRequest('${r.id}')">Approve</button>
           <button class="btn btn-danger btn-sm" onclick="rejectRequest('${r.id}')">Reject</button>` : '—' }
     ], requests, 'No product requests yet.')}</div>`;
@@ -20,7 +20,7 @@ export async function renderRequests() {
 
 export async function approveRequest(id) {
   const price = val(`buy-${id}`);
-  if (!price) return toast('Enter a buying price first.', 'error');
+  if (price === '' || Number(price) < 0) return toast('Enter a valid total buying price first.', 'error');
   const { error } = await supabase.rpc('approve_product_request', { p_request_id: id, p_buying_price: price });
   if (error) return toast(friendlyError(error), 'error');
   toast('Request approved.', 'success'); renderRequests();

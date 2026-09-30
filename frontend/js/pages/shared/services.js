@@ -31,17 +31,21 @@ export async function renderServices() {
   if (!branchId) return;
   document.getElementById('svc-cashier-body').innerHTML = `
     <form onsubmit="return submitServiceTxn(event)">
-      <div class="panel"><div class="form-row" id="svc-select-row"><div class="loader-wrap"><div class="loader"></div></div></div>
-      <button class="btn btn-primary" type="submit">Record Service</button></div>
+      <div class="panel"><div class="panel-header"><h3>New service sale</h3></div><div class="form-row" id="svc-select-row"><div class="loader-wrap"><div class="loader"></div></div></div>
+      <p class="muted small">Choose the service provided and enter the amount charged for this customer.</p>
+      <button class="btn btn-primary" id="svc-submit" type="submit">Record Service Sale</button></div>
     </form>
     <div class="panel" id="svc-txn-table"><div class="loader-wrap"><div class="loader"></div></div></div>`;
-  const [{ data: services }, { data: txns }] = await Promise.all([
+  const [{ data: services, error: servicesError }, { data: txns, error: txnsError }] = await Promise.all([
     supabase.from('services_view').select('*').eq('branch_id', branchId).eq('active', true),
     supabase.from('service_transactions_view').select('*').eq('branch_id', branchId).order('created_at', { ascending: false })
   ]);
+  if (servicesError) throw servicesError;
+  if (txnsError) throw txnsError;
   document.getElementById('svc-select-row').innerHTML = `
-    <label>Service<select id="svc-select">${(services || []).map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></label>
-    <label>Amount Charged<input id="svc-amount" type="number" min="1" required /></label>`;
+    <label>Service<select id="svc-select" required ${services?.length ? '' : 'disabled'}><option value="">${services?.length ? 'Select a service' : 'No active services at this branch'}</option>${(services || []).map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></label>
+    <label>Amount Charged<input id="svc-amount" type="number" min="0.01" step="0.01" required ${services?.length ? '' : 'disabled'} /></label>`;
+  document.getElementById('svc-submit').disabled = !services?.length;
   document.getElementById('svc-txn-table').innerHTML = renderTable([
     { key: 'service_name', label: 'Service' }, { key: 'amount', label: 'Amount', render: (r) => money(r.amount) },
     { key: 'created_at', label: 'Time', render: (r) => new Date(r.created_at).toLocaleString() }

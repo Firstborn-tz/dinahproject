@@ -7,30 +7,23 @@ export async function renderProducts() {
   const main = document.getElementById('app-main');
   const { data: products, error } = await supabase.from('products_view').select('*').order('name');
   if (error) throw error;
-  main.innerHTML = `<h1 class="page-title">Products</h1><p class="page-sub">Manage the master catalogue, then assign to a branch with opening stock.</p>
+  main.innerHTML = `<h1 class="page-title">Products</h1><p class="page-sub">Add products directly to a branch. For packs, enter the total pack cost and number of sellable items; the unit cost is calculated automatically.</p>
     <div class="panel"><div class="panel-header"><h3>Add Product</h3></div>
       <form onsubmit="return submitProduct(event)">
         <div class="form-row">
+          <label>Branch<select id="p-branch" required>${state.branches.map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')}</select></label>
           <label>Name<input id="p-name" required /></label>
           <label>Type<select id="p-type"><option value="FOR_SALE">For Sale</option><option value="RESOURCE">Resource (consumed by services)</option></select></label>
           <label>Category<input id="p-category" placeholder="e.g. Writing Materials" /></label>
-          <label>Unit<input id="p-unit" placeholder="piece / ream / sheet" value="piece" /></label>
-          <label>Buying Price<input id="p-buy" type="number" min="0" required /></label>
+          <label>Sellable unit<input id="p-unit" placeholder="piece / sheet" value="piece" /></label>
+          <label>Total buying price for pack<input id="p-buy" type="number" min="0" step="0.01" required /></label>
+          <label>Items in pack<input id="p-pack" type="number" min="1" step="1" value="1" required /></label>
+          <label>Quantity received (individual items)<input id="p-qty" type="number" min="0" step="1" value="0" required /></label>
           <label>Selling Price (blank for resources)<input id="p-sell" type="number" min="0" /></label>
         </div>
+        <p class="muted small">Cost per item: <strong id="p-unit-cost">—</strong>. Set the selling price per item.</p>
         <button class="btn btn-primary" type="submit">Add Product</button>
       </form>
-    </div>
-    <div class="panel"><div class="panel-header"><h3>Assign Product to a Branch</h3></div>
-      ${state.branches.length ? `<form onsubmit="return submitAssign(event)">
-        <div class="form-row">
-          <label>Branch<select id="a-branch">${state.branches.map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')}</select></label>
-          <label>Product<select id="a-product">${products.map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')}</select></label>
-          <label>Opening Quantity<input id="a-qty" type="number" min="0" value="0" /></label>
-          <label>Low Stock Level (blank = default)<input id="a-low" type="number" min="0" /></label>
-        </div>
-        <button class="btn btn-primary" type="submit">Assign to Branch</button>
-      </form>` : `<p class="muted">Create a branch first under <strong>Branches</strong> before assigning products.</p>`}
     </div>
     <div class="panel"><div class="panel-header"><h3>Catalogue</h3></div>
       ${renderTable([
@@ -40,13 +33,17 @@ export async function renderProducts() {
         { key: 'selling_price', label: 'Selling Price', render: (r) => r.type === 'FOR_SALE' ? money(r.selling_price) : '—' }
       ], products)}
     </div>`;
+  const updateCost = () => { const pack = Number(val('p-pack')); const total = Number(val('p-buy')); const out = document.getElementById('p-unit-cost'); if (out) out.textContent = pack > 0 ? money(total / pack) : '—'; };
+  document.getElementById('p-pack').addEventListener('input', updateCost);
+  document.getElementById('p-buy').addEventListener('input', updateCost);
+  updateCost();
 }
 
 export async function submitProduct(e) {
   e.preventDefault();
-  const { error } = await supabase.rpc('create_product', { p_name: val('p-name'), p_type: val('p-type'), p_category: val('p-category'), p_unit: val('p-unit'), p_buying_price: val('p-buy'), p_selling_price: val('p-sell') || 0 });
+  const { error } = await supabase.rpc('add_product_to_branch', { p_branch_id: val('p-branch'), p_name: val('p-name'), p_type: val('p-type'), p_category: val('p-category'), p_unit: val('p-unit'), p_purchase_total: val('p-buy'), p_items_per_pack: val('p-pack'), p_selling_price: val('p-sell') || 0, p_quantity: val('p-qty'), p_low_stock_level: null });
   if (error) { toast(friendlyError(error), 'error'); return false; }
-  toast('Product created. Now assign it to a branch below.', 'success');
+  toast('Product added to the branch.', 'success');
   renderProducts();
   return false;
 }
