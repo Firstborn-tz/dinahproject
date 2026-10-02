@@ -20,8 +20,9 @@ export async function renderManagerDashboard() {
     const results=await Promise.all([supabase.from('service_transactions_view').select('branch_id,amount,created_at'),supabase.from('branch_expenses_view').select('branch_id,amount,business_date,category,description'),supabase.from('branches_view').select('id,name,active').order('name'),supabase.rpc('manager_dashboard')]);
     return {data:[sales,...results]};
   });
-  if(salesRes.error||serviceRes.error||expensesRes.error||branchesRes.error||dashboardRes.error) throw salesRes.error||serviceRes.error||expensesRes.error||branchesRes.error||dashboardRes.error;
-  state.managerDashboardData={sales:salesRes.data||[],services:serviceRes.data||[],expenses:expensesRes.data||[],branches:branchesRes.data||[],meta:dashboardRes.data};
+  const expenseViewMissing=expensesRes.error && (expensesRes.error.code==='PGRST205'||/branch_expenses_view.*schema cache|schema cache.*branch_expenses_view/i.test(expensesRes.error.message||''));
+  if(salesRes.error||serviceRes.error||(expensesRes.error&&!expenseViewMissing)||branchesRes.error||dashboardRes.error) throw salesRes.error||serviceRes.error||expensesRes.error||branchesRes.error||dashboardRes.error;
+  state.managerDashboardData={sales:salesRes.data||[],services:serviceRes.data||[],expenses:expensesRes.data||[],expensesUnavailable:!!expenseViewMissing,branches:branchesRes.data||[],meta:dashboardRes.data};
   window.setDashboardPeriod('day',false);
 }
 
@@ -53,7 +54,7 @@ function drawDashboard(){
     return {id:b.id,branch:b.name,sales:ps,services:si,expenses:ex,net:Math.max(0,ps+si-ex)};
   });
   const maxVal=Math.max(1,...byBranch.map(b=>b.net)); const meta=data.meta;
-  document.getElementById('dashboard-content').innerHTML=`<div class="stat-grid">
+  document.getElementById('dashboard-content').innerHTML=`${data.expensesUnavailable?`<div class="panel dashboard-migration-notice"><strong>Expense reporting is not connected yet.</strong><span>Apply <code>supabase/migrations/0004_expenses_and_dashboard.sql</code> in your Supabase SQL Editor, then refresh the page. Sales and service totals are shown; expense and net cash figures will update after the migration.</span></div>`:''}<div class="stat-grid">
     ${statCard('Product Sales',money(totalSales))}${statCard('Service Income',money(serviceIncome))}${statCard('Expenses',money(spent),spent>0)}${statCard('Net Cash Due',money(Math.max(0,totalSales+serviceIncome-spent)))}
     ${statCard('Low Stock Items',meta.lowStockItems,meta.lowStockItems>0)}${statCard('Pending Requests',meta.pendingRequests,meta.pendingRequests>0)}${statCard('Active Branches',meta.activeBranches)}
   </div><div class="panel"><div class="panel-header"><div><h3>Branch performance</h3><p class="muted small">${escapeHtml(from)} to ${escapeHtml(to)} · sales and service income less recorded expenses</p></div></div>
