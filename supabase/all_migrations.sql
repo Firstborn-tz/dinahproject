@@ -1,5 +1,5 @@
 -- ============================================================================
--- Combined from 0001_init.sql
+-- Included from migrations/0001_init.sql
 -- ============================================================================
 -- =============================================================================
 -- Dinah Stationaries — Supabase schema, security, and business logic
@@ -874,9 +874,8 @@ revoke execute on function public.app_role(), public.app_branch_id(), public.is_
 -- follow the README's "bootstrapping your first Admin" instructions.
 -- =============================================================================
 
-
 -- ============================================================================
--- Combined from 0002_branch_map_link.sql
+-- Included from migrations/0002_branch_map_link.sql
 -- ============================================================================
 -- =============================================================================
 -- 0002 — Branch map links + public branch listing
@@ -945,9 +944,8 @@ grant select on public.branches_view to authenticated;
 grant execute on function public.create_branch(text, text, text) to authenticated;
 grant execute on function public.update_branch(uuid, text, text, text, boolean) to authenticated;
 
-
 -- ============================================================================
--- Combined from 0003_product_intake_and_pricing.sql
+-- Included from migrations/0003_product_intake_and_pricing.sql
 -- ============================================================================
 -- Product intake supports pack purchases, direct manager stock assignment,
 -- and cashier reported deliveries awaiting manager cost confirmation.
@@ -1029,6 +1027,10 @@ $$;
 
 grant execute on function public.add_product_to_branch(uuid,text,text,text,text,numeric,numeric,numeric,numeric,numeric) to authenticated;
 grant execute on function public.create_product_request(text,numeric,text,numeric,numeric,numeric,text) to authenticated;
+
+-- ============================================================================
+-- Included from migrations/0004_expenses_and_dashboard.sql
+-- ============================================================================
 -- Branch operating expenses and net daily cash.
 create table if not exists public.branch_expenses (
   id uuid primary key default gen_random_uuid(),
@@ -1067,6 +1069,8 @@ begin
   return v_expense;
 end;
 $$;
+revoke all on function public.record_branch_expense(text,text,numeric,date) from public, anon;
+grant execute on function public.record_branch_expense(text,text,numeric,date) to authenticated;
 
 create or replace function public.close_daily(p_business_date date default (now() at time zone 'Africa/Dar_es_Salaam')::date)
 returns public.daily_closings language plpgsql security definer set search_path = public as $$
@@ -1086,6 +1090,3 @@ begin
   return v_closing;
 end;
 $$;
-
-revoke all on function public.record_branch_expense(text,text,numeric,date) from public, anon;
-grant execute on function public.record_branch_expense(text,text,numeric,date) to authenticated;
