@@ -141,6 +141,11 @@ that statement** — much easier than debugging blind.
 4. Run `supabase/migrations/0002_branch_map_link.sql` the same way (new
    query, paste, Run). This adds the required Google Maps link per branch
    and the public branch listing used on the landing page.
+5. Run migrations `0003_product_intake_and_pricing.sql`,
+   `0004_expenses_and_dashboard.sql`, and
+   `0005_expense_net_cash_closing.sql` in order. The last migration updates
+   daily expected cash to subtract branch expenses and corrects previously
+   closed days and their collection differences.
 
 ### 1.3 Get your API keys
 1. **Project Settings** (gear icon) → **API**.
