@@ -6,6 +6,7 @@ import { money, renderTable, statCard, escapeHtml, toast } from '../../ui.js';
 const dayKey = (value) => new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Dar_es_Salaam'}).format(new Date(value));
 const todayKey = () => dayKey(new Date());
 let expenseSort = { key: 'date', direction: 'desc' };
+let dashboardDrawVersion = 0;
 
 async function fetchAll(query) {
   const rows=[];
@@ -56,14 +57,18 @@ export function applyDashboardDates(){
   if(!from||!to||from>to){toast('Choose a valid date range.','error');return;}
   document.querySelectorAll('.period-btn').forEach(b=>{b.classList.toggle('btn-primary',b.dataset.period==='custom');b.classList.toggle('btn-outline',b.dataset.period!=='custom');}); drawDashboard();
 }
-function drawDashboard(){
+async function drawDashboard(){
   const data=state.managerDashboardData;if(!data)return;
   const from=document.getElementById('dash-from').value,to=document.getElementById('dash-to').value,selected=document.getElementById('dash-branch').value;
+  const drawVersion=++dashboardDrawVersion;
+  const {data:financials,error:financialError}=await supabase.rpc('manager_financial_summary',{p_from:from,p_to:to,p_branch_id:selected==='all'?null:selected});
+  if(drawVersion!==dashboardDrawVersion)return;
+  if(financialError){toast(`Could not load profit and cash summary: ${financialError.message}`,'error');return;}
   const branchOk=id=>selected==='all'||id===selected, dateOk=d=>d>=from&&d<=to;
   const sales=data.sales.filter(x=>x.status==='COMPLETED'&&branchOk(x.branch_id)&&dateOk(dayKey(x.created_at)));
   const services=data.services.filter(x=>branchOk(x.branch_id)&&dateOk(dayKey(x.created_at)));
   const expenses=data.expenses.filter(x=>branchOk(x.branch_id)&&dateOk(x.business_date));
-  const totalSales=sales.reduce((n,x)=>n+Number(x.total),0), serviceIncome=services.reduce((n,x)=>n+Number(x.amount),0), spent=expenses.reduce((n,x)=>n+Number(x.amount),0);
+  const spent=expenses.reduce((n,x)=>n+Number(x.amount),0);
   const byBranch=data.branches.filter(b=>selected==='all'||b.id===selected).map(b=>{
     const ps=sales.filter(x=>x.branch_id===b.id).reduce((n,x)=>n+Number(x.total),0),si=services.filter(x=>x.branch_id===b.id).reduce((n,x)=>n+Number(x.amount),0),ex=expenses.filter(x=>x.branch_id===b.id).reduce((n,x)=>n+Number(x.amount),0);
     return {id:b.id,branch:b.name,sales:ps,services:si,expenses:ex,net:ps+si-ex};
@@ -74,9 +79,11 @@ function drawDashboard(){
   expenseRows.sort((a,b)=>{const av=sortValue[expenseSort.key](a),bv=sortValue[expenseSort.key](b);return (av<bv?-1:av>bv?1:0)*(expenseSort.direction==='asc'?1:-1);});
   const maxVal=Math.max(1,...byBranch.map(b=>Math.abs(b.net))); const meta=data.meta;
   document.getElementById('dashboard-content').innerHTML=`${data.expensesUnavailable?`<div class="panel dashboard-migration-notice"><strong>Expense reporting is not connected yet.</strong><span>Apply the expense and net cash migrations from the Supabase migrations folder, then refresh the page. Sales and service totals are shown; expense and net cash figures will update after the migrations.</span></div>`:''}<div class="stat-grid">
-    ${statCard('Product Sales',money(totalSales))}${statCard('Service Income',money(serviceIncome))}${statCard('Branch Expenses',money(spent),spent>0)}${statCard('Cash Due After Expenses',money(totalSales+serviceIncome-spent),totalSales+serviceIncome<spent)}
+    ${statCard('Product Sales',money(financials.productSales))}${statCard('Product Profit',money(financials.productProfit),financials.productProfit<0)}${statCard('Service Income',money(financials.serviceIncome))}${statCard('Service Profit',money(financials.serviceProfit),financials.serviceProfit<0)}
+    ${statCard('Branch Expenses',money(financials.branchExpenses),financials.branchExpenses>0)}${statCard('Cash to Collect',money(financials.cashToCollect),financials.cashToCollect<0)}${statCard('Net Profit / Loss',money(financials.netProfit),financials.netProfit<0)}
     ${statCard('Low Stock Items',meta.lowStockItems,meta.lowStockItems>0)}${statCard('Pending Requests',meta.pendingRequests,meta.pendingRequests>0)}${statCard('Active Branches',meta.activeBranches)}
-  </div><div class="panel"><div class="panel-header"><div><h3>Branch performance</h3><p class="muted small">${escapeHtml(from)} to ${escapeHtml(to)} · sales and service income less recorded expenses</p></div></div>
+  </div><p class="dashboard-financial-note">Cash to collect = product sales + service income less branch expenses. Product profit deducts product cost. Service profit deducts resource costs and branch expenses. Negative profit indicates a loss.</p>
+  <div class="panel"><div class="panel-header"><div><h3>Branch performance</h3><p class="muted small">${escapeHtml(from)} to ${escapeHtml(to)} · sales and service income less recorded expenses</p></div></div>
     <div class="bars-scroll"><div class="bars">${byBranch.map(b=>`<div class="bar-col"><div class="bar ${b.net<0?'bar-negative':''}" style="height:${Math.max(4,(Math.abs(b.net)/maxVal)*120)}px" title="${money(b.net)}"></div><div class="bar-label">${escapeHtml(b.branch)}</div></div>`).join('')}</div></div>
     ${renderTable([{key:'branch',label:'Branch'},{key:'sales',label:'Product Sales',render:r=>money(r.sales)},{key:'services',label:'Service Income',render:r=>money(r.services)},{key:'expenses',label:'Expenses',render:r=>money(r.expenses)},{key:'net',label:'Net Cash Due',render:r=>`<strong>${money(r.net)}</strong>`}],byBranch,'No branch activity in this period.')}
   </div><div class="panel"><div class="panel-header"><div><h3>Branch expenses</h3><p class="muted small">All expense entries for ${escapeHtml(from)} to ${escapeHtml(to)}. Select a branch above to narrow this list.</p></div><strong class="expense-total">Total: ${money(spent)}</strong></div>

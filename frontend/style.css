@@ -289,8 +289,11 @@ tr:hover td{background:var(--surface-hover);}
 .pos-item .name{font-weight:600;font-size:.88rem;margin-bottom:2px;}
 .pos-item .price{color:var(--link);font-weight:700;font-size:.9rem;}
 .pos-item .stock{font-size:.72rem;color:var(--body);}
-.pos-cart{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:sticky;top:76px;height:fit-content;}
-.cart-line{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem;}
+.pos-cart{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:sticky;top:76px;height:fit-content;min-width:0;overflow:hidden;}
+.cart-lines{display:grid;gap:9px;min-width:0;max-height:min(56vh,520px);overflow-y:auto;padding:2px 3px 2px 0;}
+.cart-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:10px 11px;border:1px solid var(--border);border-radius:11px;background:var(--surface-hover);font-size:.88rem;}
+.cart-line-info{display:grid;gap:3px;min-width:0;}
+.cart-line-info strong{overflow-wrap:anywhere;line-height:1.35;}
 .cart-qty-controls{display:flex;align-items:center;gap:6px;}
 .cart-qty-controls button{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:600;}
 .cart-total{display:flex;justify-content:space-between;font-size:1.15rem;font-weight:700;margin:14px 0;color:var(--text);font-family:var(--font-display);}
@@ -778,6 +781,7 @@ img,svg{max-width:100%;}
 .table-sort{padding:0;border:0;background:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;}
 .table-sort:hover{color:var(--link);}
 .expense-total{font-variant-numeric:tabular-nums;}
+.dashboard-financial-note{margin:-5px 2px 14px;color:var(--body);font-size:.82rem;line-height:1.55;}
 @media(max-width:680px){.dashboard-periods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));}.dashboard-periods .btn{width:100%;padding-inline:8px}.dashboard-filter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.dashboard-filter-fields label{min-width:0}.dashboard-filter-fields .btn{width:100%;}}
 @media(max-width:420px){.dashboard-filter-fields{grid-template-columns:1fr;}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.stat-card{padding:12px;}.stat-card .label{font-size:.68rem;letter-spacing:.025em;}.stat-card .value{font-size:clamp(.95rem,5vw,1.2rem);line-height:1.25;}}
 @media(max-width:900px){.intake-fields{grid-template-columns:repeat(2,minmax(0,1fr));}}

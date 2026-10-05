@@ -143,9 +143,11 @@ that statement** — much easier than debugging blind.
    and the public branch listing used on the landing page.
 5. Run migrations `0003_product_intake_and_pricing.sql`,
    `0004_expenses_and_dashboard.sql`, and
-   `0005_expense_net_cash_closing.sql` in order. The last migration updates
-   daily expected cash to subtract branch expenses and corrects previously
-   closed days and their collection differences.
+   `0005_expense_net_cash_closing.sql` and
+   `0006_manager_profit_summary.sql` in order. Migration 0005 updates daily
+   expected cash to subtract branch expenses and corrects previously closed
+   days and their collection differences. Migration 0006 adds date and branch
+   aware product profit, service profit, net profit/loss, and cash summaries.
 
 ### 1.3 Get your API keys
 1. **Project Settings** (gear icon) → **API**.

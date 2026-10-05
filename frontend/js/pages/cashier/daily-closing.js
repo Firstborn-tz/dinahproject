@@ -25,7 +25,7 @@ export async function renderDailyClosing() {
 export async function addBranchExpense() {
   const result = await promptDialog({title:'Record branch expense',icon:'dollar',confirmLabel:'Save expense',fields:[
     {id:'description',label:'Reason',placeholder:'What was the expense for?'},
-    {id:'amount',label:'Amount',type:'number',min:0.01,placeholder:'0.00'}
+    {id:'amount',label:'Amount',type:'number',min:0.01,step:0.01,placeholder:'0.00'}
   ]});
   if (!result) return;
   const reason=result.description.trim(), amount=Number(result.amount);

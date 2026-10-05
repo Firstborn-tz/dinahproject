@@ -10,7 +10,7 @@ export async function renderPOS() {
   main.innerHTML = `<h1 class="page-title">Point of Sale</h1>
     <input id="pos-search" placeholder="Search products…" class="pos-search" oninput="posSearchDebounced(this.value)" />
     <div class="pos-layout"><div id="pos-grid" class="pos-grid"><div class="loader-wrap"><div class="loader"></div></div></div>
-      <div class="pos-cart"><h3>Cart</h3><div id="cart-lines"></div>
+      <div class="pos-cart"><h3>Cart</h3><div id="cart-lines" class="cart-lines"></div>
         <div class="cart-total"><span>Total</span><span id="cart-total">${money(0)}</span></div>
         <button class="btn btn-primary btn-block" onclick="completeSale()">Complete Sale</button>
       </div></div>`;
@@ -52,8 +52,8 @@ function renderCart() {
   const box = document.getElementById('cart-lines');
   if (!box) return;
   box.innerHTML = state.cart.length ? state.cart.map((c) => `
-    <div class="cart-line"><div>${escapeHtml(c.name)}<br><span class="muted small">${money(c.price)} each</span></div>
-      <div class="cart-qty-controls"><button onclick="changeCartQty('${c.productId}',-1)">−</button><span>${c.quantity}</span><button onclick="changeCartQty('${c.productId}',1)">+</button></div>
+    <div class="cart-line"><div class="cart-line-info"><strong>${escapeHtml(c.name)}</strong><span class="muted small">${money(c.price)} each</span></div>
+      <div class="cart-qty-controls"><button aria-label="Remove one ${escapeHtml(c.name)}" onclick="changeCartQty('${c.productId}',-1)">−</button><span>${c.quantity}</span><button aria-label="Add one ${escapeHtml(c.name)}" onclick="changeCartQty('${c.productId}',1)">+</button></div>
     </div>`).join('') : `<p class="muted small">Cart is empty. Tap a product to add it.</p>`;
   document.getElementById('cart-total').textContent = money(state.cart.reduce((sum, c) => sum + c.price * c.quantity, 0));
 }

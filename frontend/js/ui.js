@@ -116,7 +116,7 @@ export function promptDialog({ title, message = '', fields, confirmLabel = 'Subm
     const fieldHtml = (f) => {
       if (f.type === 'select') return `<label>${escapeHtml(f.label)}<select id="pd-${f.id}">${f.options.map((o) => `<option value="${escapeHtml(o.value)}" ${o.value === f.value ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}</select></label>`;
       if (f.type === 'textarea') return `<label>${escapeHtml(f.label)}<textarea id="pd-${f.id}" rows="3" placeholder="${escapeHtml(f.placeholder || '')}">${escapeHtml(f.value || '')}</textarea></label>`;
-      return `<label>${escapeHtml(f.label)}<input id="pd-${f.id}" type="${f.type || 'text'}" placeholder="${escapeHtml(f.placeholder || '')}" value="${escapeHtml(f.value ?? '')}" ${f.min != null ? `min="${f.min}"` : ''} /></label>`;
+      return `<label>${escapeHtml(f.label)}<input id="pd-${f.id}" type="${f.type || 'text'}" placeholder="${escapeHtml(f.placeholder || '')}" value="${escapeHtml(f.value ?? '')}" ${f.min != null ? `min="${f.min}"` : ''} ${f.step != null ? `step="${f.step}"` : ''} /></label>`;
     };
     root.innerHTML = `<div class="modal-backdrop" id="dlg-backdrop"><div class="modal confirm-modal">
       <div class="confirm-icon ${danger ? 'danger' : ''}">${icon(iconName)}</div>
