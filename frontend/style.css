@@ -772,6 +772,8 @@ img,svg{max-width:100%;}
 .dashboard-migration-notice{display:grid;gap:6px;border-left:4px solid var(--warning-ink,var(--blue));background:var(--surface-hover);line-height:1.5;}
 .dashboard-migration-notice code{font-size:.85em;overflow-wrap:anywhere;}
 .dashboard-periods,.dashboard-filter-fields{display:flex;align-items:end;flex-wrap:wrap;gap:9px;}
+.dashboard-custom-dates{display:flex;align-items:end;flex-wrap:wrap;gap:9px;}
+.dashboard-custom-dates[hidden]{display:none;}
 .dashboard-filter-fields label{display:grid;gap:5px;min-width:145px;flex:1;color:var(--body);font-size:.78rem;font-weight:650;}
 .dashboard-filter-fields input,.dashboard-filter-fields select{width:100%;min-height:44px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text);font:500 .9rem var(--font-body);}
 .dashboard-periods .btn{min-height:40px;}
@@ -791,4 +793,55 @@ img,svg{max-width:100%;}
   .intake-summary>div{flex:1;min-width:150px;}
   .intake-actions .btn{width:100%;}
   .request-approval{min-width:190px;}
+}
+
+/* App workspace polish: quieter surfaces, clearer hierarchy, and compact forms. */
+#app-view{min-height:100vh;background:var(--bg);}
+.app-shell{background:var(--bg);}
+.app-sidebar{position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;}
+.app-main{min-width:0;max-width:1600px;width:100%;margin:0 auto;padding:clamp(22px,3vw,42px);}
+.page-title{font-size:clamp(1.55rem,2vw,2rem);font-weight:700;letter-spacing:-.035em;margin-bottom:6px;}
+.page-sub{max-width:780px;line-height:1.65;margin:0 0 26px;font-size:.94rem;}
+.panel,.stat-card{box-shadow:0 1px 2px rgba(18,38,63,.04);}
+.panel{padding:clamp(18px,2vw,26px);margin-bottom:20px;}
+.panel-header{margin-bottom:18px;}
+.panel-header h3{font-size:1.02rem;letter-spacing:-.015em;}
+.form-row{gap:16px;margin-bottom:18px;}
+.form-row label,.intake-form label{color:var(--text);font-weight:600;line-height:1.45;}
+.form-row input,.form-row select,.form-row textarea,.intake-form input,.intake-form select,
+input:not([type="checkbox"]):not([type="radio"]),select,textarea{
+  transition:border-color .16s ease,box-shadow .16s ease;
+}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus,
+.intake-form input:focus,.intake-form select:focus,
+input:not([type="checkbox"]):not([type="radio"]):focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.14);
+}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid rgba(14,165,233,.55);outline-offset:2px;}
+.form-disclosure{padding:0;overflow:hidden;}
+.form-disclosure>summary{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;cursor:pointer;list-style:none;}
+.form-disclosure>summary::-webkit-details-marker{display:none;}
+.form-disclosure>summary>span:first-child{display:grid;gap:3px;}
+.form-disclosure>summary strong{font-size:1rem;color:var(--text);}
+.form-disclosure>summary small{font-size:.82rem;color:var(--body);font-weight:400;}
+.disclosure-action{flex:none;padding:8px 12px;border:1px solid var(--border);border-radius:9px;color:var(--link);font-size:.82rem;font-weight:650;background:var(--surface-hover);}
+.form-disclosure[open]>summary{border-bottom:1px solid var(--border);background:var(--surface-hover);}
+.form-disclosure[open] .disclosure-action{background:var(--info-soft);border-color:transparent;}
+.form-disclosure-body{padding:20px;}
+.table-scroll{border:1px solid var(--border);border-radius:10px;}
+.table-scroll table{min-width:640px;}
+th{background:var(--surface-hover);}
+.btn{font-weight:650;}
+@media(max-width:780px){
+ .app-sidebar{position:fixed;top:0;height:100vh;}
+ .form-disclosure>summary{padding:14px 16px;}
+ .form-disclosure-body{padding:16px;}
+}
+@media(max-width:480px){
+ .app-main{padding:18px 13px 28px;}
+ .page-sub{font-size:.88rem;margin-bottom:20px;}
+ .panel{padding:16px;}
+ .form-disclosure{padding:0;}
+ .form-disclosure>summary{align-items:flex-start;}
+ .disclosure-action{font-size:.75rem;}
 }

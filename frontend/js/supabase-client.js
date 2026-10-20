@@ -4,6 +4,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = window.SUPABASE_URL;
 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('Supabase is not configured. Copy config.example.js to config.js and add the project URL and anon key.');
+}
+
 // Performance: open the connection to Supabase as early as possible, in
 // parallel with the rest of the page parsing/rendering.
 (() => {

@@ -18,7 +18,7 @@ export async function renderUsers() {
   if (error) throw error;
   const hasBranches = (branches || []).length > 0;
   main.innerHTML = `<h1 class="page-title">Users</h1><p class="page-sub">Create Admin (Manager) or Cashier accounts. Exactly one active cashier per branch.</p>
-    <div class="panel"><div class="panel-header"><h3>Add User</h3></div>
+    <details class="panel form-disclosure"><summary><span><strong>Add a user</strong><small>Create a manager or cashier account.</small></span><span class="disclosure-action">Add user</span></summary><div class="form-disclosure-body">
       <form onsubmit="return submitUser(event)">
         <div class="form-row">
           <label>Role<select id="u-role" onchange="onUserRoleChange(this.value)"><option value="CASHIER">Cashier</option><option value="MANAGER">Admin (Manager)</option></select></label>
@@ -30,7 +30,7 @@ export async function renderUsers() {
         ${hasBranches ? '' : '<p class="muted small">Create a branch first under <strong>Branches</strong> before adding a Cashier (Admin accounts don\'t need one).</p>'}
         <button class="btn btn-primary" type="submit">Add User</button>
       </form>
-    </div>
+    </div></details>
     <div class="panel"><div class="panel-header"><h3>All Users</h3></div>
       ${renderTable([
         { key: 'full_name', label: 'Name' }, { key: 'email', label: 'Email' },

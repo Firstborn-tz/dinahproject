@@ -8,7 +8,7 @@ export async function renderBranches() {
   const { data: branches, error } = await supabase.from('branches_view').select('*').order('name');
   if (error) throw error;
   main.innerHTML = `<h1 class="page-title">Branches</h1><p class="page-sub">Each branch has independent inventory, services and cashier. A map link is required so customers can find it from the website.</p>
-    <div class="panel"><div class="panel-header"><h3>Add Branch</h3></div>
+    <details class="panel form-disclosure"><summary><span><strong>Add a branch</strong><small>Create a location and add its Google Maps link.</small></span><span class="disclosure-action">Add branch</span></summary><div class="form-disclosure-body">
       <form onsubmit="return submitBranch(event)">
         <div class="form-row">
           <label>Branch Name<input id="branch-name" required /></label>
@@ -18,7 +18,7 @@ export async function renderBranches() {
         <p class="muted small">Open Google Maps, find this branch, click <strong>Share</strong>, copy the link, and paste it here.</p>
         <button class="btn btn-primary" type="submit">Add Branch</button>
       </form>
-    </div>
+    </div></details>
     <div class="panel"><div class="panel-header"><h3>All Branches</h3></div>
       ${renderTable([
         { key: 'name', label: 'Name' }, { key: 'address', label: 'Address' },

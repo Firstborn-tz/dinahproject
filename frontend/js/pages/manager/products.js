@@ -8,7 +8,7 @@ export async function renderProducts() {
   const { data: products, error } = await supabase.from('products_view').select('*').order('name');
   if (error) throw error;
   main.innerHTML = `<h1 class="page-title">Products</h1><p class="page-sub">Add stock directly to a branch. For packed products, enter the cost and item count for one pack; stock is recorded as individual units.</p>
-    <div class="panel intake-panel"><div class="panel-header"><div><h3>Add Product to Branch</h3><p class="muted small">Choose how it is purchased. Cost per item and stock quantity update automatically.</p></div></div>
+    <details class="panel form-disclosure intake-panel"><summary><span><strong>Add product to branch</strong><small>Choose a purchase format; unit cost and stock quantity are calculated automatically.</small></span><span class="disclosure-action">Add product</span></summary><div class="form-disclosure-body">
       <form class="intake-form" onsubmit="return submitProduct(event)">
         <div class="intake-mode-row">
           <label class="intake-mode-field">Purchase format<select id="p-buy-mode" onchange="onProductBuyModeChange(this.value)"><option value="PACK">Packed together (box / carton)</option><option value="INDIVIDUAL">Individual items</option></select></label>
@@ -31,7 +31,7 @@ export async function renderProducts() {
         </div>
         <div class="intake-actions"><button class="btn btn-primary" type="submit">Add to Branch Inventory</button></div>
       </form>
-    </div>
+    </div></details>
     <div class="panel"><div class="panel-header"><h3>Product Catalogue</h3></div>
       ${renderTable([
         { key: 'name', label: 'Name' }, { key: 'type', label: 'Type', render: (r) => badge(r.type === 'FOR_SALE' ? 'For sale' : 'Resource', r.type === 'FOR_SALE' ? 'blue' : 'yellow') },

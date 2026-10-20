@@ -99,11 +99,11 @@ function renderLocation() {
   const s = state.settings || {};
   if (s.google_maps_embed_url) wrap.innerHTML = `<iframe src="${escapeHtml(s.google_maps_embed_url)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Dinah Stationaries location"></iframe>`;
   else if (s.office_address) wrap.innerHTML = `<iframe src="https://www.google.com/maps?q=${encodeURIComponent(s.office_address)}&output=embed" loading="lazy" title="Dinah Stationaries location"></iframe>`;
-  else wrap.innerHTML = `<div class="card" style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;">Location coming soon — set it up in Manager → Settings.</div>`;
+  else wrap.innerHTML = `<div class="card" style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;">Wait for Admin to confirm details.</div>`;
   details.innerHTML = `
     <p><strong>${escapeHtml(s.business_name || 'Dinah Stationaries')}</strong></p>
-    <p>${icon('map-pin', 'icon-inline')}${escapeHtml(s.office_address || 'Address to be added by Manager in Settings.')}</p>
-    <p>${icon('clock', 'icon-inline')}${escapeHtml(s.opening_hours || 'Opening hours to be added.')}</p>
+    <p>${icon('map-pin', 'icon-inline')}${escapeHtml(s.office_address || 'Office adress soon will appears.')}</p>
+    <p>${icon('clock', 'icon-inline')}${escapeHtml(s.opening_hours || 'Opening ours will be added soon.')}</p>
     <p>${icon('phone', 'icon-inline')}${escapeHtml(s.phone || 'Phone to be added.')}</p>
     ${s.google_maps_url ? `<a class="btn btn-primary" style="margin-top:10px" href="${escapeHtml(s.google_maps_url)}" target="_blank" rel="noopener">Get Directions</a>` : ''}`;
 }

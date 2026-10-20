@@ -10,8 +10,8 @@ host it for you on free tiers.
 
 ## Code layout — one file per page
 
-`frontend/js/` is now real ES modules (native browser `import`/`export`,
-still zero build step — Vercel just serves the files as-is):
+`frontend/js/` uses native browser `import`/`export`; a small Vercel build
+step writes deployment-specific public Supabase config:
 
 ```
 js/
@@ -153,14 +153,16 @@ that statement** — much easier than debugging blind.
 1. **Project Settings** (gear icon) → **API**.
 2. Copy the **Project URL** and the **anon / public** key (NOT the
    `service_role` key — that one never goes in the frontend).
-3. Open `frontend/index.html`, find this block near the top, and fill in
-   your real values:
-   ```html
-   <script>
-     window.SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-     window.SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
-   </script>
-   ```
+3. For local use, copy `frontend/config.example.js` to
+   `frontend/config.js` and set your Project URL and anon/publishable key.
+   For Vercel, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `APP_URL` as
+   project environment variables. The build generates the ignored
+   `config.js`; set `APP_URL` to the deployed site origin for password reset
+   links.
+4. The anon/publishable key and project URL are public browser configuration,
+   not secrets. Supabase relies on Row Level Security and guarded functions
+   for access control. Never put the `service_role` key or a database password
+   in `frontend/`; keep service credentials in Supabase Edge Function secrets.
 
 ### 1.4 Deploy the create-user Edge Function
 This needs the Supabase CLI (one-time install):
@@ -268,20 +270,16 @@ nothing and takes 10 seconds (same SMTP & API page → regenerate key).
    git push -u origin main
    ```
 2. Go to [vercel.com](https://vercel.com) → sign in with GitHub → **Add New → Project** → import your repo.
-3. Configure:
+3. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `APP_URL` under the project Settings ? Environment Variables. Configure:
    - **Framework Preset:** Other
    - **Root Directory:** `frontend`
-   - **Build Command:** leave empty
-   - **Output Directory:** leave as default
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `.`
 4. Click **Deploy**. You'll get a URL like `https://dinah-stationaries.vercel.app`.
 5. Open it and test: landing page loads, login works with your bootstrapped
    Admin account, dashboard loads.
 
-**Note:** `frontend/index.html` already has your real Supabase project URL
-and anon key filled in — there's nothing left to edit before deploying, and
-no Vercel environment variables to set. The anon key is safe to have
-visible in your site's source; it can only do what your RLS/views/functions
-allow it to do.
+The build creates `config.js` from those Vercel variables. The generated file is public in the browser by design and contains only the project URL and anon/publishable key. RLS and guarded database functions enforce access; never use the `service_role` key in the frontend.
 
 ### Custom domain (optional)
 Vercel project → **Settings → Domains → Add** → follow the CNAME

@@ -2,3 +2,5 @@
 *.log
 .supabase/
 node_modules/
+
+frontend/config.js

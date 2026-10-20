@@ -26,8 +26,8 @@ export async function renderManagerDashboard() {
     <div class="panel dashboard-filters"><div class="dashboard-periods" role="group" aria-label="Reporting period">
       ${[['day','Daily'],['week','Weekly'],['month','Monthly'],['year','Yearly'],['custom','Custom']].map(([id,label])=>`<button class="btn btn-outline period-btn" data-period="${id}" onclick="setDashboardPeriod('${id}')">${label}</button>`).join('')}
     </div><div class="dashboard-filter-fields"><label>Branch<select id="dash-branch" onchange="drawDashboard()"><option value="all">All branches</option>${state.branches.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')}</select></label>
-      <label>From<input id="dash-from" type="date" value="${today}" /></label><label>To<input id="dash-to" type="date" value="${today}" /></label>
-      <button class="btn btn-primary" onclick="applyDashboardDates()">Apply dates</button></div></div>
+      <div id="dash-custom-dates" class="dashboard-custom-dates" hidden><label>From<input id="dash-from" type="date" value="${today}" /></label><label>To<input id="dash-to" type="date" value="${today}" /></label>
+      <button class="btn btn-primary" onclick="applyDashboardDates()">Apply dates</button></div></div></div>
     <div id="dashboard-content"><div class="loader-wrap"><div class="loader"></div></div></div>`;
   const [salesRes,serviceRes,expensesRes,branchesRes,dashboardRes]=await Promise.all([
     fetchAll(supabase.from('sales_view').select('branch_id,total,status,created_at')),
@@ -49,13 +49,16 @@ export function setDashboardPeriod(period, redraw=true) {
   if(period==='year') start=`${end.slice(0,4)}-01-01`;
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('btn-primary',b.dataset.period===period));
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('btn-outline',b.dataset.period!==period));
+  document.getElementById('dash-custom-dates').hidden=period!=='custom';
   if(period!=='custom'){document.getElementById('dash-from').value=start;document.getElementById('dash-to').value=end;}
   if(redraw) drawDashboard(); else drawDashboard();
 }
 export function applyDashboardDates(){
   const from=document.getElementById('dash-from').value,to=document.getElementById('dash-to').value;
   if(!from||!to||from>to){toast('Choose a valid date range.','error');return;}
-  document.querySelectorAll('.period-btn').forEach(b=>{b.classList.toggle('btn-primary',b.dataset.period==='custom');b.classList.toggle('btn-outline',b.dataset.period!=='custom');}); drawDashboard();
+  document.querySelectorAll('.period-btn').forEach(b=>{b.classList.toggle('btn-primary',b.dataset.period==='custom');b.classList.toggle('btn-outline',b.dataset.period!=='custom');});
+  document.getElementById('dash-custom-dates').hidden=false;
+  drawDashboard();
 }
 async function drawDashboard(){
   const data=state.managerDashboardData;if(!data)return;

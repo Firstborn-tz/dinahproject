@@ -928,7 +928,7 @@ begin
   if not found then raise exception 'Branch not found.'; end if;
   perform public.log_action('BRANCH_UPDATE', 'branch', v_branch.id, '{}'::jsonb);
   return v_branch;
-end;
+end;` 
 $$;
 
 -- 4. Public listing for the landing page (no login needed): only active branches.

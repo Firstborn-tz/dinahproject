@@ -17,18 +17,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 
-<!-- ===== Supabase project config =====
-     Fill these in (Supabase Dashboard -> Project Settings -> API), or set
-     them via your Vercel environment/build step. The anon key is safe to
-     expose publicly — it's designed for this and is only as powerful as
-     the Row Level Security rules in your database allow. -->
-<script>
-  window.SUPABASE_URL = "https://xutvieticfzototuifrr.supabase.co";
-  window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1dHZpZXRpY2Z6b3RvdHVpZnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzMjU1NzQsImV4cCI6MjEwNTkwMTU3NH0.4EcKTNYEpVmXQy4WNcuG7XD-iPMDG9dgpLJAUMo80aE";
-  // Set this to the deployed frontend origin (for example, https://your-site.vercel.app).
-  // Leave empty during local development to use the current origin.
-  window.APP_URL = "";
-</script>
+<!-- Public browser configuration. Create frontend/config.js from config.example.js. -->
+<script src="config.js"></script>
 </head>
 <body>
 
@@ -141,24 +131,6 @@
   </section>
 
   <footer class="footer">
-    <div class="container grid grid-4">
-      <div>
-        <div class="brand brand-footer"><span class="brand-icon" data-icon="pen"></span> DINAH <strong>STATIONARIES</strong></div>
-        <p class="muted">Your trusted stationery and document service partner.</p>
-      </div>
-      <div>
-        <h4>Quick Links</h4>
-        <a href="#home">Home</a><a href="#products">Stationery</a><a href="#services">Services</a><a href="#location">Location</a><a href="#contact">Contact</a>
-      </div>
-      <div>
-        <h4>Services</h4>
-        <a href="#services">Printing</a><a href="#services">Photocopying</a><a href="#services">Binding</a><a href="#services">Lamination</a>
-      </div>
-      <div>
-        <h4>Contact</h4>
-        <a href="#contact">Phone</a><a href="#contact">Email</a><a href="#location">Location</a>
-      </div>
-    </div>
     <div class="footer-bottom">© <span id="footer-year"></span> Dinah Stationaries · Developed by Progr_Willy</div>
   </footer>
 </div>
