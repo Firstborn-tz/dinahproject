@@ -49,7 +49,9 @@ export function setDashboardPeriod(period, redraw=true) {
   if(period==='year') start=`${end.slice(0,4)}-01-01`;
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('btn-primary',b.dataset.period===period));
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('btn-outline',b.dataset.period!==period));
-  document.getElementById('dash-custom-dates').hidden=period!=='custom';
+  const customDates=document.getElementById('dash-custom-dates');
+  customDates.hidden=period!=='custom';
+  customDates.style.display=period==='custom'?'flex':'none';
   if(period!=='custom'){document.getElementById('dash-from').value=start;document.getElementById('dash-to').value=end;}
   if(redraw) drawDashboard(); else drawDashboard();
 }
@@ -57,7 +59,9 @@ export function applyDashboardDates(){
   const from=document.getElementById('dash-from').value,to=document.getElementById('dash-to').value;
   if(!from||!to||from>to){toast('Choose a valid date range.','error');return;}
   document.querySelectorAll('.period-btn').forEach(b=>{b.classList.toggle('btn-primary',b.dataset.period==='custom');b.classList.toggle('btn-outline',b.dataset.period!=='custom');});
-  document.getElementById('dash-custom-dates').hidden=false;
+  const customDates=document.getElementById('dash-custom-dates');
+  customDates.hidden=false;
+  customDates.style.display='flex';
   drawDashboard();
 }
 async function drawDashboard(){
