@@ -155,10 +155,10 @@ that statement** — much easier than debugging blind.
    `service_role` key — that one never goes in the frontend).
 3. For local use, copy `frontend/config.example.js` to
    `frontend/config.js` and set your Project URL and anon/publishable key.
-   For Vercel, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `APP_URL` as
-   project environment variables. The build generates the ignored
-   `config.js`; set `APP_URL` to the deployed site origin for password reset
-   links.
+   For Vercel, set `SUPABASE_URL` and `SUPABASE_ANON_KEY`; set `APP_URL` to
+   the deployed site origin for password reset links. If `APP_URL` is omitted,
+   the build uses Vercel's production domain (or deployment domain as a
+   fallback). A localhost `APP_URL` is ignored in Vercel builds.
 4. The anon/publishable key and project URL are public browser configuration,
    not secrets. Supabase relies on Row Level Security and guarded functions
    for access control. Never put the `service_role` key or a database password

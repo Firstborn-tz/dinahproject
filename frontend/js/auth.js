@@ -114,6 +114,13 @@ export function getAppRedirectUrl() {
   try {
     const target = new URL(configured || window.location.origin);
     if (!['http:', 'https:'].includes(target.protocol)) throw new Error('Invalid app URL protocol');
+    // Never email a localhost destination from a deployed site, even if stale
+    // deployment configuration accidentally contains one.
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' &&
+        window.location.hostname !== '::1' &&
+        (target.hostname === 'localhost' || target.hostname === '127.0.0.1' || target.hostname === '::1')) {
+      return window.location.origin;
+    }
     return target.origin;
   } catch {
     return window.location.origin;
