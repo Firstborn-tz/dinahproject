@@ -845,3 +845,15 @@ th{background:var(--surface-hover);}
  .form-disclosure>summary{align-items:flex-start;}
  .disclosure-action{font-size:.75rem;}
 }
+
+/* Landing service overview and persistent WhatsApp contact action. */
+.services-grid{align-items:stretch;}
+.service-card{height:100%;padding:24px;}
+.service-card h3{font-size:1.02rem;margin:0 0 8px;}
+.service-card p{font-size:.9rem;line-height:1.65;margin:0;color:var(--body);}
+.whatsapp-float{position:fixed;right:24px;bottom:24px;z-index:80;display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 19px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:#168b55;color:#fff;box-shadow:0 12px 30px rgba(10,70,42,.28);font-size:.9rem;font-weight:700;letter-spacing:.005em;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;}
+.whatsapp-float:hover{background:#117747;color:#fff;transform:translateY(-2px);box-shadow:0 16px 34px rgba(10,70,42,.34);}
+.whatsapp-float-icon{display:grid;place-items:center;width:28px;height:28px;border:2px solid currentColor;border-radius:50%;font-size:1.2rem;line-height:1;}
+@media(max-width:600px){.whatsapp-float{right:15px;bottom:15px;min-height:52px;padding:0 16px;font-size:.82rem;}}
+@media(prefers-reduced-motion:reduce){.whatsapp-float{transition:none;}}
+.whatsapp-float-icon .icon{width:19px;height:19px;}
