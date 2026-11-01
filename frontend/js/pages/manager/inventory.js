@@ -1,6 +1,6 @@
 // js/pages/manager/inventory.js
 import { supabase } from '../../supabase-client.js';
-import { renderTable, money, badge, toast, friendlyError, escapeHtml, resolveBranchId, promptDialog } from '../../ui.js';
+import { renderTable, money, badge, toast, friendlyError, escapeHtml, inlineArg, resolveBranchId, promptDialog } from '../../ui.js';
 import { branchSelectorHtml } from '../../layout.js';
 
 export async function renderInventory() {
@@ -16,7 +16,7 @@ export async function renderInventory() {
     { key: 'buying_price', label: 'Buying Price', render: (r) => money(r.buying_price) },
     { key: 'inventory_value', label: 'Inventory Value', render: (r) => money(r.inventory_value) },
     { key: 'low_stock', label: 'Status', render: (r) => r.low_stock ? badge('LOW STOCK', 'red') : badge('OK', 'green') },
-    { key: 'adjust', label: '', render: (r) => `<button class="btn btn-outline btn-sm" onclick="promptAdjust('${r.product_id}','${escapeHtml(r.name)}')">Adjust</button>` }
+    { key: 'adjust', label: '', render: (r) => `<button class="btn btn-outline btn-sm" onclick="promptAdjust(${inlineArg(r.product_id)},${inlineArg(r.name)})">Adjust</button>` }
   ], rows);
 }
 

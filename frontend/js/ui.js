@@ -8,6 +8,15 @@ import { state, sanitizeId } from './state.js';
 export function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+// Use for untrusted values passed as arguments in inline event attributes.
+// JSON quoting handles JavaScript syntax; HTML escaping protects the attribute.
+export function inlineArg(value) { return escapeHtml(JSON.stringify(String(value ?? '')).replace(/</g, '\\u003c')); }
+export function safeExternalUrl(value) {
+  try {
+    const url = new URL(String(value ?? ''));
+    return ['https:', 'http:'].includes(url.protocol) ? url.href : '';
+  } catch { return ''; }
+}
 export function money(n) {
   const currency = state.settings?.currency || 'TZS';
   return `${currency} ${Math.round(Number(n) || 0).toLocaleString()}`;

@@ -1,7 +1,7 @@
 // js/pages/manager/branches.js
 import { supabase } from '../../supabase-client.js';
 import { state } from '../../state.js';
-import { escapeHtml, badge, renderTable, toast, friendlyError, val, promptDialog } from '../../ui.js';
+import { escapeHtml, inlineArg, safeExternalUrl, badge, renderTable, toast, friendlyError, val, promptDialog } from '../../ui.js';
 
 export async function renderBranches() {
   const main = document.getElementById('app-main');
@@ -22,9 +22,9 @@ export async function renderBranches() {
     <div class="panel"><div class="panel-header"><h3>All Branches</h3></div>
       ${renderTable([
         { key: 'name', label: 'Name' }, { key: 'address', label: 'Address' },
-        { key: 'map_url', label: 'Map Link', render: (r) => r.map_url ? `<a href="${escapeHtml(r.map_url)}" target="_blank" rel="noopener">Open</a>` : `<span class="badge badge-yellow">Missing</span>` },
+        { key: 'map_url', label: 'Map Link', render: (r) => safeExternalUrl(r.map_url) ? `<a href="${escapeHtml(safeExternalUrl(r.map_url))}" target="_blank" rel="noopener noreferrer">Open</a>` : `<span class="badge badge-yellow">Missing or invalid</span>` },
         { key: 'active', label: 'Status', render: (r) => badge(r.active ? 'Active' : 'Inactive', r.active ? 'green' : 'gray') },
-        { key: 'actions', label: '', render: (r) => `<button class="link-btn" onclick="editBranch('${r.id}','${escapeHtml(r.name)}','${escapeHtml(r.address || '')}','${escapeHtml(r.map_url || '')}',${r.active})">Edit</button>` }
+        { key: 'actions', label: '', render: (r) => `<button class="link-btn" onclick="editBranch(${inlineArg(r.id)},${inlineArg(r.name)},${inlineArg(r.address || '')},${inlineArg(r.map_url || '')},${Boolean(r.active)})">Edit</button>` }
       ], branches)}
     </div>`;
 }

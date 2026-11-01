@@ -1,6 +1,6 @@
 // js/pages/shared/sales.js
 import { supabase } from '../../supabase-client.js';
-import { renderTable, money, badge, toast, friendlyError, resolveBranchId, promptDialog } from '../../ui.js';
+import { renderTable, money, badge, toast, friendlyError, escapeHtml, inlineArg, resolveBranchId, promptDialog } from '../../ui.js';
 import { branchSelectorHtml } from '../../layout.js';
 
 export async function renderSales() {
@@ -13,10 +13,10 @@ export async function renderSales() {
   if (error) throw error;
   document.getElementById('sales-table').innerHTML = renderTable([
     { key: 'txn_number', label: 'Txn #' }, { key: 'total', label: 'Total', render: (r) => money(r.total) },
-    { key: 'items', label: 'Items', render: (r) => (r.items || []).map((i) => `${i.name} x${i.quantity}`).join(', ') },
+    { key: 'items', label: 'Items', render: (r) => (r.items || []).map((i) => `${escapeHtml(i.name)} x${Number(i.quantity) || 0}`).join(', ') },
     { key: 'status', label: 'Status', render: (r) => badge(r.status, r.status === 'COMPLETED' ? 'green' : 'red') },
     { key: 'created_at', label: 'Time', render: (r) => new Date(r.created_at).toLocaleString() },
-    { key: 'void', label: '', render: (r) => r.status === 'COMPLETED' ? `<button class="btn btn-danger btn-sm" onclick="voidSale('${r.id}')">Void</button>` : '—' }
+    { key: 'void', label: '', render: (r) => r.status === 'COMPLETED' ? `<button class="btn btn-danger btn-sm" onclick="voidSale(${inlineArg(r.id)})">Void</button>` : '—' }
   ], sales, 'No sales recorded yet.');
 }
 

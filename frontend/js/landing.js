@@ -46,8 +46,15 @@ export function wireScrollReveal() {
 
 export async function loadPublicSite() {
   document.getElementById('footer-year').textContent = new Date().getFullYear();
-  const { data } = await supabase.from('public_settings').select('*').single();
-  state.settings = data || {};
+  try {
+    const { data, error } = await supabase.from('public_settings').select('*').single();
+    if (error) throw error;
+    state.settings = data || {};
+  } catch (error) {
+    // The public page should remain useful during a brief database outage.
+    console.error('Could not load public business details:', error);
+    state.settings = {};
+  }
   renderLocation();
   renderContact();
   renderPublicServices();

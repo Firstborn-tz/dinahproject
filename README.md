@@ -142,12 +142,13 @@ that statement** — much easier than debugging blind.
    query, paste, Run). This adds the required Google Maps link per branch
    and the public branch listing used on the landing page.
 5. Run migrations `0003_product_intake_and_pricing.sql`,
-   `0004_expenses_and_dashboard.sql`, and
-   `0005_expense_net_cash_closing.sql` and
-   `0006_manager_profit_summary.sql` in order. Migration 0005 updates daily
+   `0004_expenses_and_dashboard.sql`, `0005_expense_net_cash_closing.sql`,
+   `0006_manager_profit_summary.sql`, and `0007_protect_audit_log.sql` in
+   order. Migration 0005 updates daily
    expected cash to subtract branch expenses and corrects previously closed
    days and their collection differences. Migration 0006 adds date and branch
    aware product profit, service profit, net profit/loss, and cash summaries.
+   Migration 0007 prevents signed-in users from directly writing audit log entries.
 
 ### 1.3 Get your API keys
 1. **Project Settings** (gear icon) → **API**.

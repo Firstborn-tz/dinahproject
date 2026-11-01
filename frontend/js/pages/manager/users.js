@@ -1,7 +1,7 @@
 // js/pages/manager/users.js
 import { supabase } from '../../supabase-client.js';
 import { getAppRedirectUrl } from '../../auth.js';
-import { escapeHtml, badge, renderTable, toast, friendlyError, functionError, val, confirmDialog, promptDialog } from '../../ui.js';
+import { escapeHtml, inlineArg, badge, renderTable, toast, friendlyError, functionError, val, confirmDialog, promptDialog } from '../../ui.js';
 
 function randomPassword() {
   // A readable-enough random password an admin can relay to a cashier verbally or by note.
@@ -38,9 +38,9 @@ export async function renderUsers() {
         { key: 'branch_id', label: 'Branch', render: (r) => r.branch_id ? escapeHtml(branches.find((b) => b.id === r.branch_id)?.name || '—') : '— (all branches)' },
         { key: 'active', label: 'Status', render: (r) => badge(r.active ? 'Active' : 'Inactive', r.active ? 'green' : 'gray') },
         { key: 'actions', label: '', render: (r) => `
-          <button class="link-btn" onclick="toggleUser('${r.id}', ${!r.active}, '${escapeHtml(r.full_name)}')">${r.active ? 'Deactivate' : 'Activate'}</button> ·
-          <button class="link-btn" onclick="resetUserPassword('${r.id}', '${escapeHtml(r.full_name)}')">Reset Password</button> ·
-          <button class="link-btn" onclick="emailResetLink('${escapeHtml(r.email)}')">Email Reset Link</button>` }
+          <button class="link-btn" onclick="toggleUser(${inlineArg(r.id)}, ${!r.active}, ${inlineArg(r.full_name)})">${r.active ? 'Deactivate' : 'Activate'}</button> ·
+          <button class="link-btn" onclick="resetUserPassword(${inlineArg(r.id)}, ${inlineArg(r.full_name)})">Reset Password</button> ·
+          <button class="link-btn" onclick="emailResetLink(${inlineArg(r.email)})">Email Reset Link</button>` }
       ], users)}
     </div>`;
 }

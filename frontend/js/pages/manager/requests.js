@@ -1,6 +1,6 @@
 // js/pages/manager/requests.js
 import { supabase } from '../../supabase-client.js';
-import { escapeHtml, badge, renderTable, money, toast, friendlyError, val, confirmDialog } from '../../ui.js';
+import { escapeHtml, inlineArg, badge, renderTable, money, toast, friendlyError, val, confirmDialog } from '../../ui.js';
 
 export async function renderRequests() {
   const main = document.getElementById('app-main');
@@ -20,8 +20,8 @@ export async function renderRequests() {
           <label for="buy-${r.id}">Buying cost · ${r.intake_type === 'PACK' ? 'one box' : 'one item'}</label>
           <input class="request-cost-input" type="number" min="0" step="0.01" placeholder="Enter cost" id="buy-${r.id}" inputmode="decimal" />
           <small id="buy-preview-${r.id}" aria-live="polite">Cost per item: —</small>
-          <div class="request-approval-actions"><button class="btn btn-success btn-sm" onclick="approveRequest('${r.id}')">Confirm &amp; Add</button>
-          <button class="btn btn-danger btn-sm" onclick="rejectRequest('${r.id}')">Reject</button></div>
+          <div class="request-approval-actions"><button class="btn btn-success btn-sm" onclick="approveRequest(${inlineArg(r.id)})">Confirm &amp; Add</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectRequest(${inlineArg(r.id)})">Reject</button></div>
         </div>` : '—' }
     ], requests, 'No delivered stock is waiting for confirmation.')}</div>`;
   requests.filter((r) => r.status === 'PENDING').forEach((r) => {

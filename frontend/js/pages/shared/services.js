@@ -1,7 +1,7 @@
 // js/pages/shared/services.js
 import { supabase } from '../../supabase-client.js';
 import { state } from '../../state.js';
-import { escapeHtml, badge, renderTable, money, toast, friendlyError, val, resolveBranchId } from '../../ui.js';
+import { escapeHtml, inlineArg, badge, renderTable, money, toast, friendlyError, val, resolveBranchId } from '../../ui.js';
 import { branchSelectorHtml } from '../../layout.js';
 
 export async function renderServices() {
@@ -20,7 +20,7 @@ export async function renderServices() {
         <button class="btn btn-primary" type="submit">Add Service</button></form></div>
       <div class="panel">${renderTable([
         { key: 'name', label: 'Name' }, { key: 'description', label: 'Description' },
-        { key: 'active', label: 'Status', render: (r) => `<button class="link-btn" onclick="toggleService('${r.id}', ${!r.active})">${badge(r.active ? 'Active' : 'Inactive', r.active ? 'green' : 'gray')}</button>` }
+        { key: 'active', label: 'Status', render: (r) => `<button class="link-btn" onclick="toggleService(${inlineArg(r.id)}, ${!r.active})">${badge(r.active ? 'Active' : 'Inactive', r.active ? 'green' : 'gray')}</button>` }
       ], services)}</div>`;
     return;
   }

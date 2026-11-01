@@ -743,7 +743,7 @@ end;
 $$;
 
 -- ---------- Daily closing / cash collection ----------
-create or replace function public.close_daily(p_business_date date default (now() at time zone 'Africa/Dar_es_Salaam')::date)
+create or replace function public.close_daily(p_business_date date default (now() at time zone 'Africa/Dodoma')::date)
 returns public.daily_closings language plpgsql security definer set search_path = public as $$
 declare v_branch uuid; v_sales numeric; v_services numeric; v_closing public.daily_closings;
 begin
@@ -753,7 +753,7 @@ begin
     raise exception 'This business day has already been closed.';
   end if;
 
-  select coalesce(sum(total), 0) into v_sales from public.sales
+  select coalesce(sum(total), 0) into v_sales from public.sales0
     where branch_id = v_branch and status = 'COMPLETED' and created_at::date = p_business_date;
   select coalesce(sum(amount), 0) into v_services from public.service_transactions
     where branch_id = v_branch and created_at::date = p_business_date;
@@ -867,6 +867,9 @@ $$;
 
 grant execute on all functions in schema public to authenticated;
 revoke execute on function public.app_role(), public.app_branch_id(), public.is_manager(), public.is_cashier(), public.log_action(text,text,uuid,jsonb) from anon;
+-- log_action is an internal SECURITY DEFINER helper. Direct execution would
+-- let signed-in users forge audit history; business RPCs call it as owner.
+revoke execute on function public.log_action(text,text,uuid,jsonb) from public, anon, authenticated;
 
 -- =============================================================================
 -- Done. Next: deploy the "create-user" Edge Function (see
@@ -1090,6 +1093,9 @@ begin
   return v_closing;
 end;
 $$;
+
+-- Defense in depth for bundled installs: audit logging is internal only.
+revoke execute on function public.log_action(text,text,uuid,jsonb) from public, anon, authenticated;
 
 update public.daily_closings d
 set expected_cash = d.product_sales + d.service_income - coalesce((

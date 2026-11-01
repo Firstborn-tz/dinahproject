@@ -99,14 +99,21 @@ async function handleForgotPassword(e) {
   const btn = document.getElementById('forgot-submit-btn');
   btn.disabled = true; btn.textContent = 'Sending…';
   const redirectTo = getAppRedirectUrl();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-  msgBox.classList.remove('hidden');
-  if (error) { msgBox.className = 'form-error'; msgBox.textContent = friendlyError(error); }
-  else {
-    msgBox.className = 'form-success';
-    msgBox.textContent = `If that email has an account, a reset link is on its way. The link will open ${redirectTo}.`;
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    msgBox.classList.remove('hidden');
+    if (error) { msgBox.className = 'form-error'; msgBox.textContent = friendlyError(error); }
+    else {
+      msgBox.className = 'form-success';
+      msgBox.textContent = `If that email has an account, a reset link is on its way. The link will open ${redirectTo}.`;
+    }
+  } catch (error) {
+    msgBox.className = 'form-error';
+    msgBox.textContent = friendlyError(error);
+    msgBox.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send Reset Link';
   }
-  btn.disabled = false; btn.textContent = 'Send Reset Link';
 }
 
 export function getAppRedirectUrl() {
@@ -136,7 +143,12 @@ async function handleResetPassword(e) {
   if (pass !== confirmPass) { errBox.textContent = 'Passwords do not match.'; errBox.classList.remove('hidden'); return; }
   const submit = document.querySelector('#reset-form button[type="submit"]');
   submit.disabled = true; submit.textContent = 'Updating password…';
-  const { error } = await supabase.auth.updateUser({ password: pass });
+  let error;
+  try {
+    ({ error } = await supabase.auth.updateUser({ password: pass }));
+  } catch (requestError) {
+    error = requestError;
+  }
   if (error) {
     errBox.textContent = friendlyError(error); errBox.classList.remove('hidden');
     submit.disabled = false; submit.textContent = 'Update Password';

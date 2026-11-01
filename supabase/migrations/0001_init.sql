@@ -864,6 +864,9 @@ $$;
 
 grant execute on all functions in schema public to authenticated;
 revoke execute on function public.app_role(), public.app_branch_id(), public.is_manager(), public.is_cashier(), public.log_action(text,text,uuid,jsonb) from anon;
+-- log_action is an internal SECURITY DEFINER helper. Direct execution would
+-- let signed-in users forge audit history; business RPCs call it as owner.
+revoke execute on function public.log_action(text,text,uuid,jsonb) from public, anon, authenticated;
 
 -- =============================================================================
 -- Done. Next: deploy the "create-user" Edge Function (see

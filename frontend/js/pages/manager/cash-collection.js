@@ -1,7 +1,7 @@
 // js/pages/manager/cash-collection.js
 import { supabase } from '../../supabase-client.js';
 import { state } from '../../state.js';
-import { renderTable, money, badge, toast, friendlyError, resolveBranchId, promptDialog } from '../../ui.js';
+import { renderTable, money, badge, toast, friendlyError, inlineArg, resolveBranchId, promptDialog } from '../../ui.js';
 import { branchSelectorHtml } from '../../layout.js';
 
 export async function renderCashCollection() {
@@ -20,7 +20,7 @@ export async function renderCashCollection() {
     <div class="panel"><div class="panel-header"><h3>Closed Days Awaiting Collection</h3></div>
       ${renderTable([
         { key: 'business_date', label: 'Date' }, { key: 'expected_cash', label: 'Expected Cash', render: (r) => money(r.expected_cash) },
-        { key: 'action', label: '', render: (r) => (collections || []).some((c) => c.business_date === r.business_date) ? '<span class="badge badge-green">Collected</span>' : `<button class="btn btn-primary btn-sm" onclick="collectCash('${r.business_date}', ${r.expected_cash})">Record Collection</button>` }
+        { key: 'action', label: '', render: (r) => (collections || []).some((c) => c.business_date === r.business_date) ? '<span class="badge badge-green">Collected</span>' : `<button class="btn btn-primary btn-sm" onclick="collectCash(${inlineArg(r.business_date)}, ${Number(r.expected_cash) || 0})">Record Collection</button>` }
       ], closings, 'No closed business days yet for this branch.')}
     </div>
     <div class="panel"><div class="panel-header"><h3>Collection History</h3></div>

@@ -1,7 +1,7 @@
 // js/pages/manager/returns.js
 import { supabase } from '../../supabase-client.js';
 import { state } from '../../state.js';
-import { renderTable, badge, toast, friendlyError, resolveBranchId, confirmDialog } from '../../ui.js';
+import { renderTable, badge, toast, friendlyError, inlineArg, resolveBranchId, confirmDialog } from '../../ui.js';
 import { branchSelectorHtml } from '../../layout.js';
 
 export async function renderReturns() {
@@ -16,7 +16,7 @@ export async function renderReturns() {
   document.getElementById('ret-table').innerHTML = renderTable([
     { key: 'product_id', label: 'Product' }, { key: 'quantity', label: 'Qty' }, { key: 'reason', label: 'Reason' },
     { key: 'status', label: 'Status', render: (r) => badge(r.status, r.status === 'PENDING' ? 'yellow' : r.status === 'APPROVED' ? 'green' : 'red') },
-    { key: 'actions', label: '', render: (r) => isManager && r.status === 'PENDING' ? `<button class="btn btn-success btn-sm" onclick="approveReturn('${r.id}')">Approve</button> <button class="btn btn-danger btn-sm" onclick="rejectReturn('${r.id}')">Reject</button>` : '—' }
+    { key: 'actions', label: '', render: (r) => isManager && r.status === 'PENDING' ? `<button class="btn btn-success btn-sm" onclick="approveReturn(${inlineArg(r.id)})">Approve</button> <button class="btn btn-danger btn-sm" onclick="rejectReturn(${inlineArg(r.id)})">Reject</button>` : '—' }
   ], returns, 'No returns recorded yet.');
 }
 export async function approveReturn(id) {
