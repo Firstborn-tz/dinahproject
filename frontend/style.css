@@ -857,3 +857,69 @@ th{background:var(--surface-hover);}
 @media(max-width:600px){.whatsapp-float{right:15px;bottom:15px;min-height:52px;padding:0 16px;font-size:.82rem;}}
 @media(prefers-reduced-motion:reduce){.whatsapp-float{transition:none;}}
 .whatsapp-float-icon .icon{width:19px;height:19px;}
+
+/* Consistent app workspace across desktop, tablet and narrow phones. */
+.app-topbar{min-height:64px;padding:10px clamp(14px,2.2vw,30px);box-shadow:0 2px 12px rgba(8,24,40,.16);}
+.app-sidebar{top:64px;height:calc(100vh - 64px);padding:14px 10px;}
+.app-sidebar button{border-radius:10px;border-left:0;padding:11px 13px;margin:2px 0;}
+.app-sidebar button.active{box-shadow:inset 3px 0 var(--sky);}
+.app-main{max-width:none;padding:clamp(22px,3vw,44px);}
+.page-title{display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
+.page-sub{margin-bottom:24px;}
+.stat-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px;}
+.stat-card{border-radius:16px;padding:20px;}
+.panel{border-radius:16px;}
+.table-scroll{max-width:100%;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch;}
+.pos-layout{align-items:start;grid-template-columns:minmax(0,1.65fr) minmax(300px,.85fr);gap:18px;}
+.pos-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}
+.pos-cart{top:80px;}
+.dropdown-profile-card{background:var(--surface-hover);}
+.dropdown-role-pill{background:var(--success-soft);color:var(--success-ink)!important;}
+button:disabled,.btn:disabled{cursor:not-allowed;opacity:.58;transform:none;}
+
+@media(max-width:1100px){
+  .pos-layout{grid-template-columns:minmax(0,1.25fr) minmax(270px,.9fr);}
+  .app-sidebar{width:210px;}
+}
+@media(max-width:780px){
+  .app-topbar{min-height:58px;}
+  .app-sidebar{top:0;height:100dvh;padding-top:76px;}
+  .app-main{padding:24px clamp(16px,3vw,28px);}
+  .pos-layout{grid-template-columns:1fr;}
+  .pos-cart{position:relative;top:auto;bottom:auto;max-height:none;}
+  .cart-lines{max-height:38vh;}
+  .panel-header{align-items:flex-start;}
+}
+@media(max-width:600px){
+  .app-topbar{padding:8px 10px;}
+  .app-topbar-left{gap:3px;}
+  .app-topbar-right{gap:6px;}
+  .app-main{padding:20px 14px calc(26px + env(safe-area-inset-bottom));}
+  .page-title{font-size:1.4rem;line-height:1.25;}
+  .page-sub{font-size:.88rem;margin-bottom:18px;}
+  .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .stat-card{padding:13px;border-radius:13px;min-width:0;}
+  .stat-card .value{font-size:clamp(1rem,5vw,1.3rem);overflow-wrap:anywhere;}
+  .stat-card .label{font-size:.67rem;}
+  .panel{padding:15px;margin-bottom:15px;}
+  .panel-header{gap:8px;margin-bottom:14px;}
+  .panel-header select,.select-branch{max-width:100%;}
+  .table-scroll{margin-inline:-1px;}
+  .table-scroll table{min-width:600px;}
+  .pos-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .pos-item{padding:12px 8px;}
+  .pos-cart{padding:15px;}
+  .form-row{gap:12px;}
+}
+@media(max-width:360px){
+  .app-topbar-left .brand{font-size:.78rem;}
+  .app-topbar-right{gap:4px;}
+  .theme-toggle{width:36px;height:36px;}
+  .app-logout-button{width:36px;min-height:36px;}
+  .stat-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .stat-card{padding:11px;}
+  .pos-grid{grid-template-columns:1fr 1fr;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+}
