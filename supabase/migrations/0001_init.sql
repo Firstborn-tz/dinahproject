@@ -1,13 +1,18 @@
+
+
+-- ============================================================================
+-- Consolidated from 0001_init.sql
+-- ============================================================================
 -- =============================================================================
--- Dinah Stationaries — Supabase schema, security, and business logic
+-- Dinah Stationaries â€” Supabase schema, security, and business logic
 -- =============================================================================
 -- HOW THIS IS ORGANIZED (read this before running it):
 --
 -- 1. TABLES store data. Row Level Security is enabled on every one of them
---    with NO policies attached — meaning the raw tables are completely
+--    with NO policies attached â€” meaning the raw tables are completely
 --    unreachable from the browser (anon/authenticated), on purpose.
 -- 2. VIEWS are the only way the frontend reads data. Views in Supabase are
---    owned by the "postgres" role, which bypasses RLS — so each view below
+--    owned by the "postgres" role, which bypasses RLS â€” so each view below
 --    manually re-implements the row/column filtering it needs (e.g. "only
 --    rows from my branch", "buying_price only if I'm a manager") using the
 --    helper functions in section 2. This is Supabase's documented pattern
@@ -16,7 +21,7 @@
 -- 3. FUNCTIONS (RPCs) are the only way the frontend writes data. Every one
 --    is SECURITY DEFINER (bypasses RLS internally) and starts by checking
 --    who is calling (via auth.uid()) and rejecting anything they're not
---    allowed to do. This is where all business rules live — stock checks,
+--    allowed to do. This is where all business rules live â€” stock checks,
 --    branch isolation, atomic multi-table updates, audit logging.
 --
 -- Run this whole file once in Supabase Dashboard -> SQL Editor -> New query.
@@ -219,7 +224,7 @@ create table if not exists public.settings (
   currency text not null default 'TZS',
   timezone text not null default 'Africa/Dar_es_Salaam',
   tagline text not null default 'Your Trusted Stationery & Document Service Partner',
-  description text not null default 'Quality stationery products, professional printing, photocopying, binding, lamination and document services — all in one convenient place.',
+  description text not null default 'Quality stationery products, professional printing, photocopying, binding, lamination and document services â€” all in one convenient place.',
   phone text not null default '',
   whatsapp text not null default '',
   email text not null default '',
@@ -280,7 +285,7 @@ end;
 $$;
 
 -- =============================================================================
--- 3. VIEWS — the only read path. Each one filters manually since views
+-- 3. VIEWS â€” the only read path. Each one filters manually since views
 --    bypass the base table's RLS (they run as their postgres owner).
 -- =============================================================================
 
@@ -306,7 +311,7 @@ create or replace view public.users_view as
   from public.profiles p join auth.users u on u.id = p.id
   where public.is_manager();
 
--- Every logged-in user (any role) can read their own profile — needed for
+-- Every logged-in user (any role) can read their own profile â€” needed for
 -- role-based routing and the "My Profile" page. Distinct from users_view,
 -- which is manager-only and lists everyone.
 create or replace view public.my_profile_view as
@@ -391,7 +396,7 @@ grant select on
 to authenticated;
 
 -- =============================================================================
--- 4. RPC FUNCTIONS — the only write path (and a couple of read aggregates).
+-- 4. RPC FUNCTIONS â€” the only write path (and a couple of read aggregates).
 -- =============================================================================
 
 -- ---------- Profile / self-service ----------
@@ -873,3 +878,342 @@ revoke execute on function public.log_action(text,text,uuid,jsonb) from public, 
 -- supabase/functions/create-user) and create your first Admin using it, or
 -- follow the README's "bootstrapping your first Admin" instructions.
 -- =============================================================================
+
+
+-- ============================================================================
+-- Consolidated from 0002_branch_map_link.sql
+-- ============================================================================
+-- =============================================================================
+-- 0002 â€” Branch map links + public branch listing
+-- Run this AFTER 0001_init.sql, once, in Supabase -> SQL Editor.
+-- Safe to re-run.
+-- =============================================================================
+
+-- 1. Every branch can carry a Google Maps link. Existing branches get an
+--    empty value (shown as "Missing" in the admin UI until you edit them);
+--    NEW branches must supply one (enforced inside create_branch below).
+alter table public.branches add column if not exists map_url text not null default '';
+
+-- 2. create_branch now REQUIRES a map link.
+drop function if exists public.create_branch(text, text);
+create or replace function public.create_branch(p_name text, p_address text default '', p_map_url text default '')
+returns public.branches language plpgsql security definer set search_path = public as $$
+declare v_branch public.branches;
+begin
+  if not public.is_manager() then raise exception 'Only a manager can create a branch.'; end if;
+  if p_name is null or trim(p_name) = '' then raise exception 'Branch name is required.'; end if;
+  if p_map_url is null or trim(p_map_url) = '' then
+    raise exception 'A Google Maps link is required for every new branch.';
+  end if;
+  if p_map_url !~* '^https?://' then
+    raise exception 'The map link must start with http:// or https://';
+  end if;
+  insert into public.branches (name, address, map_url)
+    values (trim(p_name), coalesce(p_address, ''), trim(p_map_url)) returning * into v_branch;
+  perform public.log_action('BRANCH_CREATE', 'branch', v_branch.id, jsonb_build_object('name', p_name));
+  return v_branch;
+end;
+$$;
+
+-- 3. update_branch can now edit the map link too.
+drop function if exists public.update_branch(uuid, text, text, boolean);
+create or replace function public.update_branch(p_branch_id uuid, p_name text, p_address text, p_map_url text, p_active boolean)
+returns public.branches language plpgsql security definer set search_path = public as $$
+declare v_branch public.branches;
+begin
+  if not public.is_manager() then raise exception 'Only a manager can update a branch.'; end if;
+  if p_map_url is not null and trim(p_map_url) <> '' and p_map_url !~* '^https?://' then
+    raise exception 'The map link must start with http:// or https://';
+  end if;
+  update public.branches set
+    name = coalesce(nullif(trim(p_name), ''), name),
+    address = coalesce(p_address, address),
+    map_url = coalesce(nullif(trim(p_map_url), ''), map_url),
+    active = coalesce(p_active, active)
+  where id = p_branch_id returning * into v_branch;
+  if not found then raise exception 'Branch not found.'; end if;
+  perform public.log_action('BRANCH_UPDATE', 'branch', v_branch.id, '{}'::jsonb);
+  return v_branch;
+end;
+$$;
+
+-- 4. Public listing for the landing page (no login needed): only active branches.
+create or replace view public.public_branches as
+  select id, name, address, map_url from public.branches where active = true;
+grant select on public.public_branches to anon, authenticated;
+
+-- branches_view is "select *", so recreate it to pick up the new column.
+create or replace view public.branches_view as
+  select * from public.branches where public.is_manager() or id = public.app_branch_id();
+grant select on public.branches_view to authenticated;
+
+grant execute on function public.create_branch(text, text, text) to authenticated;
+grant execute on function public.update_branch(uuid, text, text, text, boolean) to authenticated;
+
+
+-- ============================================================================
+-- Consolidated from 0003_product_intake_and_pricing.sql
+-- ============================================================================
+-- Product intake supports pack purchases, direct manager stock assignment,
+-- and cashier reported deliveries awaiting manager cost confirmation.
+alter table public.product_requests
+  add column if not exists purchase_total numeric(12,2),
+  add column if not exists items_per_pack numeric(12,2) not null default 1,
+  add column if not exists intake_type text not null default 'INDIVIDUAL';
+
+create or replace view public.product_requests_view as
+  select * from public.product_requests
+  where public.is_manager() or branch_id = public.app_branch_id();
+
+create or replace function public.create_product_request(
+  p_product_name text, p_selling_price numeric, p_unit text, p_quantity numeric,
+  p_purchase_total numeric, p_items_per_pack numeric, p_intake_type text
+) returns public.product_requests language plpgsql security definer set search_path = public as $$
+declare v_req public.product_requests;
+begin
+  if not public.is_cashier() then raise exception 'Only a cashier can register a delivered product.'; end if;
+  if p_quantity is null or p_quantity <= 0 then raise exception 'Quantity must be positive.'; end if;
+  if p_items_per_pack is null or p_items_per_pack <= 0 then raise exception 'Items per pack must be positive.'; end if;
+  if p_intake_type not in ('INDIVIDUAL','PACK') then raise exception 'Choose individual items or a pack.'; end if;
+  if p_selling_price is null or p_selling_price <= 0 then raise exception 'Selling price must be positive.'; end if;
+  if p_purchase_total is not null and p_purchase_total < 0 then raise exception 'Purchase total cannot be negative.'; end if;
+  insert into public.product_requests
+    (branch_id, product_name, selling_price, unit, quantity, requested_by, purchase_total, items_per_pack, intake_type)
+  values (public.app_branch_id(), trim(p_product_name), p_selling_price, coalesce(nullif(trim(p_unit),''),'piece'),
+    p_quantity, auth.uid(), p_purchase_total, p_items_per_pack, p_intake_type)
+  returning * into v_req;
+  perform public.log_action('PRODUCT_DELIVERY_REGISTER', 'productRequest', v_req.branch_id, jsonb_build_object('requestId', v_req.id));
+  return v_req;
+end;
+$$;
+
+create or replace function public.add_product_to_branch(
+  p_branch_id uuid, p_name text, p_type text, p_category text, p_unit text,
+  p_purchase_total numeric, p_items_per_pack numeric, p_selling_price numeric,
+  p_quantity numeric, p_low_stock_level numeric default null
+) returns uuid language plpgsql security definer set search_path = public as $$
+declare v_product public.products;
+begin
+  if not public.is_manager() then raise exception 'Only an admin can add branch stock.'; end if;
+  if p_type not in ('FOR_SALE','RESOURCE') then raise exception 'Invalid product type.'; end if;
+  if p_purchase_total is null or p_purchase_total < 0 or p_items_per_pack is null or p_items_per_pack <= 0 then
+    raise exception 'Purchase total and items per pack must be valid.';
+  end if;
+  if p_quantity is null or p_quantity < 0 then raise exception 'Quantity cannot be negative.'; end if;
+  insert into public.products(name,type,category,unit,buying_price,selling_price)
+  values (trim(p_name), p_type, coalesce(nullif(trim(p_category),''),'General'), coalesce(nullif(trim(p_unit),''),'piece'),
+    p_purchase_total / p_items_per_pack, case when p_type='FOR_SALE' then coalesce(p_selling_price,0) else 0 end)
+  returning * into v_product;
+  insert into public.branch_products(branch_id,product_id,quantity,low_stock_level)
+  values(p_branch_id,v_product.id,p_quantity,p_low_stock_level);
+  perform public.log_action('PRODUCT_CREATE_AND_ASSIGN','branchProduct',p_branch_id,
+    jsonb_build_object('productId',v_product.id,'quantity',p_quantity,'unitBuyingPrice',v_product.buying_price));
+  return v_product.id;
+end;
+$$;
+
+create or replace function public.approve_product_request(p_request_id uuid, p_buying_price numeric, p_category text default 'General')
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_req public.product_requests; v_product public.products; v_unit_cost numeric;
+begin
+  if not public.is_manager() then raise exception 'Only an admin can confirm deliveries.'; end if;
+  select * into v_req from public.product_requests where id=p_request_id for update;
+  if not found or v_req.status <> 'PENDING' then raise exception 'Delivery not found or already reviewed.'; end if;
+  if p_buying_price is null or p_buying_price < 0 then raise exception 'Enter the total purchase cost.'; end if;
+  v_unit_cost := p_buying_price / greatest(coalesce(v_req.items_per_pack,1),1);
+  insert into public.products(name,type,category,unit,buying_price,selling_price)
+    values(v_req.product_name,'FOR_SALE',coalesce(p_category,'General'),v_req.unit,v_unit_cost,v_req.selling_price)
+    returning * into v_product;
+  insert into public.branch_products(branch_id,product_id,quantity) values(v_req.branch_id,v_product.id,v_req.quantity);
+  update public.product_requests set status='APPROVED', buying_price=v_unit_cost, purchase_total=p_buying_price,
+    product_id=v_product.id, reviewed_by=auth.uid(), reviewed_at=now() where id=p_request_id;
+  perform public.log_action('PRODUCT_DELIVERY_CONFIRM','productRequest',v_req.branch_id,jsonb_build_object('requestId',p_request_id,'productId',v_product.id,'unitBuyingPrice',v_unit_cost));
+  return jsonb_build_object('requestId',p_request_id,'productId',v_product.id,'unitBuyingPrice',v_unit_cost);
+end;
+$$;
+
+grant execute on function public.add_product_to_branch(uuid,text,text,text,text,numeric,numeric,numeric,numeric,numeric) to authenticated;
+grant execute on function public.create_product_request(text,numeric,text,numeric,numeric,numeric,text) to authenticated;
+
+
+-- ============================================================================
+-- Consolidated from 0004_expenses_and_dashboard.sql
+-- ============================================================================
+-- Branch operating expenses and net daily cash.
+create table if not exists public.branch_expenses (
+  id uuid primary key default gen_random_uuid(),
+  branch_id uuid not null references public.branches(id),
+  business_date date not null default (now() at time zone 'Africa/Dar_es_Salaam')::date,
+  description text not null check (length(trim(description)) > 0),
+  category text not null check (category in ('Food','Transport','Electricity','Other')),
+  amount numeric(12,2) not null check (amount > 0),
+  recorded_by uuid not null references public.profiles(id),
+  created_at timestamptz not null default now()
+);
+create index if not exists branch_expenses_branch_date_idx on public.branch_expenses(branch_id, business_date desc);
+alter table public.branch_expenses enable row level security;
+revoke all on public.branch_expenses from anon, authenticated;
+
+create or replace view public.branch_expenses_view as
+  select * from public.branch_expenses where public.is_manager() or branch_id = public.app_branch_id();
+grant select on public.branch_expenses_view to authenticated;
+
+create or replace function public.record_branch_expense(p_description text, p_category text, p_amount numeric,
+  p_business_date date default (now() at time zone 'Africa/Dar_es_Salaam')::date)
+returns public.branch_expenses language plpgsql security definer set search_path = public as $$
+declare v_branch uuid; v_expense public.branch_expenses;
+begin
+  if not public.is_cashier() then raise exception 'Only a cashier can record branch expenses.'; end if;
+  if trim(coalesce(p_description,'')) = '' then raise exception 'Enter what the expense was for.'; end if;
+  if p_category not in ('Food','Transport','Electricity','Other') then raise exception 'Choose a valid expense category.'; end if;
+  if p_amount is null or p_amount <= 0 then raise exception 'Expense amount must be greater than zero.'; end if;
+  v_branch := public.app_branch_id();
+  if exists(select 1 from public.daily_closings where branch_id=v_branch and business_date=p_business_date) then
+    raise exception 'This business day is already closed.';
+  end if;
+  insert into public.branch_expenses(branch_id,business_date,description,category,amount,recorded_by)
+  values(v_branch,p_business_date,trim(p_description),p_category,p_amount,auth.uid()) returning * into v_expense;
+  perform public.log_action('BRANCH_EXPENSE','branchExpense',v_branch,jsonb_build_object('date',p_business_date,'amount',p_amount,'category',p_category));
+  return v_expense;
+end;
+$$;
+revoke all on function public.record_branch_expense(text,text,numeric,date) from public, anon;
+grant execute on function public.record_branch_expense(text,text,numeric,date) to authenticated;
+
+create or replace function public.close_daily(p_business_date date default (now() at time zone 'Africa/Dar_es_Salaam')::date)
+returns public.daily_closings language plpgsql security definer set search_path = public as $$
+declare v_branch uuid; v_sales numeric; v_services numeric; v_expenses numeric; v_closing public.daily_closings;
+begin
+  if not public.is_cashier() then raise exception 'Only a cashier can close the business day.'; end if;
+  v_branch := public.app_branch_id();
+  if exists (select 1 from public.daily_closings where branch_id = v_branch and business_date = p_business_date) then
+    raise exception 'This business day has already been closed.';
+  end if;
+  select coalesce(sum(total), 0) into v_sales from public.sales where branch_id=v_branch and status='COMPLETED' and created_at::date=p_business_date;
+  select coalesce(sum(amount), 0) into v_services from public.service_transactions where branch_id=v_branch and created_at::date=p_business_date;
+  select coalesce(sum(amount), 0) into v_expenses from public.branch_expenses where branch_id=v_branch and business_date=p_business_date;
+  insert into public.daily_closings(branch_id,business_date,product_sales,service_income,expected_cash,closed_by)
+    values(v_branch,p_business_date,v_sales,v_services,greatest(0,v_sales+v_services-v_expenses),auth.uid()) returning * into v_closing;
+  perform public.log_action('DAILY_CLOSING','dailyClosing',v_branch,jsonb_build_object('date',p_business_date,'expenses',v_expenses));
+  return v_closing;
+end;
+$$;
+
+
+-- ============================================================================
+-- Consolidated from 0005_expense_net_cash_closing.sql
+-- ============================================================================
+-- Keep saved expected cash consistent with the cashier and admin dashboards:
+-- gross income less the branch expenses recorded for the business date.
+create or replace function public.close_daily(p_business_date date default (now() at time zone 'Africa/Dar_es_Salaam')::date)
+returns public.daily_closings language plpgsql security definer set search_path = public as $$
+declare v_branch uuid; v_sales numeric; v_services numeric; v_expenses numeric; v_closing public.daily_closings;
+begin
+  if not public.is_cashier() then raise exception 'Only a cashier can close the business day.'; end if;
+  v_branch := public.app_branch_id();
+  if exists (select 1 from public.daily_closings where branch_id=v_branch and business_date=p_business_date) then
+    raise exception 'This business day has already been closed.';
+  end if;
+  select coalesce(sum(total),0) into v_sales from public.sales
+    where branch_id=v_branch and status='COMPLETED'
+      and (created_at at time zone 'Africa/Dar_es_Salaam')::date=p_business_date;
+  select coalesce(sum(amount),0) into v_services from public.service_transactions
+    where branch_id=v_branch and (created_at at time zone 'Africa/Dar_es_Salaam')::date=p_business_date;
+  select coalesce(sum(amount),0) into v_expenses from public.branch_expenses
+    where branch_id=v_branch and business_date=p_business_date;
+  insert into public.daily_closings(branch_id,business_date,product_sales,service_income,expected_cash,closed_by)
+    values(v_branch,p_business_date,v_sales,v_services,v_sales+v_services-v_expenses,auth.uid()) returning * into v_closing;
+  perform public.log_action('DAILY_CLOSING','dailyClosing',v_branch,jsonb_build_object('date',p_business_date,'expenses',v_expenses));
+  return v_closing;
+end;
+$$;
+
+-- Correct previously closed days so recorded expected cash also reflects
+-- expenses that were entered before the closing function was updated.
+update public.daily_closings d
+set expected_cash = d.product_sales + d.service_income - coalesce((
+  select sum(e.amount) from public.branch_expenses e
+  where e.branch_id=d.branch_id and e.business_date=d.business_date
+),0);
+
+update public.cash_collections c
+set expected_cash=d.expected_cash,
+    difference=c.collected_amount-d.expected_cash
+from public.daily_closings d
+where d.branch_id=c.branch_id and d.business_date=c.business_date;
+
+
+-- ============================================================================
+-- Consolidated from 0006_manager_profit_summary.sql
+-- ============================================================================
+-- Period and branch aware income, cost, operating expense, profit and cash
+-- figures for the manager dashboard.
+create or replace function public.manager_financial_summary(
+  p_from date,
+  p_to date,
+  p_branch_id uuid default null
+)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_product_sales numeric := 0;
+  v_product_cost numeric := 0;
+  v_service_income numeric := 0;
+  v_service_cost numeric := 0;
+  v_branch_expenses numeric := 0;
+  v_product_profit numeric := 0;
+  v_service_profit numeric := 0;
+begin
+  if not public.is_manager() then raise exception 'Manager access only.'; end if;
+  if p_from is null or p_to is null or p_from > p_to then raise exception 'Choose a valid date range.'; end if;
+
+  select coalesce(sum(si.line_total),0), coalesce(sum(si.quantity * p.buying_price),0)
+    into v_product_sales,v_product_cost
+  from public.sales s
+  join public.sale_items si on si.sale_id=s.id
+  join public.products p on p.id=si.product_id
+  where s.status='COMPLETED'
+    and (s.created_at at time zone 'Africa/Dar_es_Salaam')::date between p_from and p_to
+    and (p_branch_id is null or s.branch_id=p_branch_id);
+
+  select coalesce(sum(amount),0) into v_service_income
+  from public.service_transactions
+  where (created_at at time zone 'Africa/Dar_es_Salaam')::date between p_from and p_to
+    and (p_branch_id is null or branch_id=p_branch_id);
+
+  select coalesce(sum(cost),0) into v_service_cost
+  from public.resource_usage
+  where (created_at at time zone 'Africa/Dar_es_Salaam')::date between p_from and p_to
+    and (p_branch_id is null or branch_id=p_branch_id);
+
+  select coalesce(sum(amount),0) into v_branch_expenses
+  from public.branch_expenses
+  where business_date between p_from and p_to
+    and (p_branch_id is null or branch_id=p_branch_id);
+
+  v_product_profit := v_product_sales-v_product_cost;
+  v_service_profit := v_service_income-v_service_cost-v_branch_expenses;
+  return jsonb_build_object(
+    'productSales',v_product_sales,
+    'productCost',v_product_cost,
+    'productProfit',v_product_profit,
+    'serviceIncome',v_service_income,
+    'serviceCost',v_service_cost,
+    'serviceProfit',v_service_profit,
+    'branchExpenses',v_branch_expenses,
+    'cashToCollect',v_product_sales+v_service_income-v_branch_expenses,
+    'netProfit',v_product_profit+v_service_profit
+  );
+end;
+$$;
+
+revoke all on function public.manager_financial_summary(date,date,uuid) from public, anon;
+grant execute on function public.manager_financial_summary(date,date,uuid) to authenticated;
+
+
+-- ============================================================================
+-- Consolidated from 0007_protect_audit_log.sql
+-- ============================================================================
+-- Keep authenticated clients from calling this SECURITY DEFINER helper
+-- directly and inserting forged audit records. Other SECURITY DEFINER RPCs
+-- continue to call it under their owner's privileges.
+revoke execute on function public.log_action(text,text,uuid,jsonb) from public, anon, authenticated;
