@@ -1,326 +1,132 @@
-# Dinah Stationaries — Production Build (Supabase + Vercel)
+﻿# Dinah Stationaries — Hosting Guide
 
-Developed by Progr_Willy — this build by Claude.
+This guide explains how to publish the Dinah Stationaries website and staff system. The frontend is a static site hosted on Vercel. Supabase hosts the PostgreSQL database, authentication, and two Edge Functions used for manager account administration.
 
-This is a full architecture change from the earlier Express/JSON-file
-prototype: the backend is now **Supabase** (Postgres + Auth + Row Level
-Security + Edge Functions), and the frontend is a static site built for
-**Vercel**. No Node server to run or keep alive — Supabase and Vercel both
-host it for you on free tiers.
+## What you need
 
-## Code layout — one file per page
+- A GitHub account and this project pushed to a repository.
+- A [Supabase](https://supabase.com) account.
+- A [Vercel](https://vercel.com) account connected to your GitHub account.
+- Node.js and npm on your computer for deploying Supabase Edge Functions.
 
-`frontend/js/` uses native browser `import`/`export`; a small Vercel build
-step writes deployment-specific public Supabase config:
+## 1. Create and configure Supabase
 
-```
-js/
-  state.js            shared app state (who's logged in, selected branch, cart...)
-  supabase-client.js  the Supabase client (sessionStorage-based sessions)
-  icons.js            every SVG icon
-  theme.js            light/dark mode
-  ui.js               toasts, confirm/prompt dialogs, tables, formatting, dropdowns
-  auth.js             login, forgot/reset password, logout
-  landing.js          the public site
-  layout.js           sidebar, topbar, router — one entry per page file below
-  main.js             entry point loaded by index.html
-  pages/
-    manager/          dashboard.js, branches.js, users.js, products.js,
-                       requests.js, inventory.js, resources.js, returns.js,
-                       cash-collection.js, reports.js, audit.js, settings.js
-    cashier/          dashboard.js, pos.js, resources.js, requests.js, daily-closing.js
-    shared/           services.js, sales.js, profile.js  (used by both roles)
-```
-Each page file only imports what it needs and attaches its own `onclick`
-handlers to `window` at the bottom — open any one file and everything about
-that page is right there.
+### Create the project
 
-## This round's fixes
+1. Create a Supabase project and save the database password somewhere private.
+2. Choose a region close to the people who will use the system.
+3. When the project is ready, open **Project Settings → API** and copy the **Project URL** and the **publishable/anon key**. These two values are used by the browser. Never use a `service_role` or secret key in the frontend.
+4. Note the project reference. It is the project identifier in the Supabase project URL, before `.supabase.co`.
 
-- **"invalid input syntax for type uuid: undefined"** — root-caused: several
-  pages queried by branch before a branch existed or was selected (a fresh
-  install starts with zero branches). Every branch-scoped page now calls a
-  shared `resolveBranchId()` guard first and shows a friendly message
-  ("Create a branch first") instead of firing a broken query.
-- **Mobile top bars and the dashboard chart** — the public nav, app topbar,
-  and "Sales by Branch" chart are now properly responsive: the topbar
-  collapses to icon-only on phones, the chart scrolls horizontally instead
-  of squashing, and touch targets are back to 44px+.
-- **Faster loads everywhere** — the landing page's four data requests
-  (settings/products/services/branches) now fire in parallel instead of one
-  after another; the entire authenticated app (sidebar + every admin/cashier
-  page) now only downloads *after* someone logs in, so a visitor just
-  browsing the landing page loads a much smaller page; fonts get an extra
-  `preconnect`; `js/main.js` is preloaded.
-- **The centered loading animation you specified** — shown full-page on
-  first load (`#page-loader`), and reused (smaller) inside any panel/table
-  while its data is fetching.
-- **Password reset links now actually work** — see step 1.6 above; this
-  needed both a required one-time Supabase dashboard setting and a code fix
-  (the app was letting the temporary recovery session log the user straight
-  into the dashboard instead of showing the "set a new password" form;
-  expired/used links now show a clear message instead of doing nothing).
-- **Admins can reset a Cashier's password directly** — new **Reset
-  Password** button on the Users page (Admin sets it and shares it with
-  them directly) alongside **Email Reset Link** (sends the normal
-  self-service email instead).
-- **Branches now require a Google Maps link**, and the landing page has a
-  new **Our Branches** section listing each one with a "View on Map"
-  button. Existing branches (if any) show "Missing" until edited.
+### Install the database schema
 
+For a **new, empty Supabase project**:
 
+1. Open **SQL Editor → New query**.
+2. Open [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), copy the entire file into the SQL Editor, and run it.
+3. Confirm the query completes, then check **Table Editor** for tables such as `branches`, `profiles`, `products`, and `sales`.
 
-- **Light/dark theme** — a toggle button (sun/moon icon) in the public nav
-  and the app topbar. Follows your OS preference automatically until you
-  pick one explicitly, then remembers your choice (`localStorage`). Sidebar
-  and top bar stay the same dark navy in both themes by design; content
-  areas (cards, panels, tables, modals, forms) switch.
-- **Dropdown user menu** — the topbar now shows your avatar initials, name,
-  and role behind a proper dropdown (My Profile / Logout), animated open and
-  closed, closes on outside click or Escape. The branch selector and other
-  `<select>` elements got a matching custom-arrow, theme-aware redesign.
-- **Sessions now end when you close the browser.** Previously, logging in
-  persisted forever (`localStorage`), so re-opening the site later dropped
-  you straight back into the dashboard. The auth token now lives in
-  `sessionStorage` instead — closing the browser/tab clears it, so opening
-  the site again always asks you to log in. Reloading the page or
-  navigating around *during* a visit keeps you logged in as normal.
-- **Faster loads** — a `preconnect` hint opens the connection to Supabase
-  before the rest of the page finishes parsing; Vercel cache headers
-  (`vercel.json`) keep `index.html` always-fresh while briefly caching
-  `style.css`/`app.js` for repeat visits; the POS search box is debounced;
-  data fetches that don't depend on each other run in parallel
-  (`Promise.all`) rather than one-after-another.
-- **`robots.txt`** added so search engines can index your public landing page.
+This is the consolidated schema file: it includes the initial schema and all seven updates in their original order. If this project already has an earlier version of the schema, take a database backup and review its migration history before running the consolidated file; do not treat a fresh-install script as a substitute for a reviewed upgrade plan.
 
+### Deploy the Edge Functions
 
----
+The two functions let active managers create staff accounts and reset their passwords. Run these commands from the project folder in PowerShell or a terminal with Node.js installed:
 
-## How it's built (read this before you touch anything)
-
-- **Every table** in the database has Row Level Security turned on with
-  **zero policies** — meaning the raw tables are completely unreachable from
-  the browser, on purpose.
-- **All reads** go through database **views** (e.g. `branch_inventory_view`,
-  `sales_view`). Each view manually filters rows (by branch) and columns
-  (e.g. hides `buying_price` from cashiers) — this is the standard, documented
-  Supabase pattern for column-level security, since RLS alone is row-level only.
-- **All writes** go through database **functions** (e.g. `create_sale`,
-  `void_sale`, `adjust_stock`) called via `supabase.rpc(...)`. Every function
-  checks who's calling and rejects anything they shouldn't be able to do —
-  this is where all the business rules live (branch isolation, stock
-  validation, atomic multi-table updates, audit logging).
-- **One exception:** creating a login (an "Admin" or "Cashier" account) has
-  to go through Supabase's Admin API, which requires a secret key that must
-  never reach the browser. That one piece lives in a small **Edge Function**
-  (`supabase/functions/create-user`) instead of in SQL.
-
-Everything is in `supabase/migrations/0001_init.sql` — one file, meant to be
-run once in the Supabase SQL Editor. It's complex, hand-written SQL; I've
-checked it carefully for balanced syntax, but I can't run a live Postgres
-instance from here to execute it end-to-end. **If any specific line throws
-an error when you run it, paste that exact error back to me and I'll fix
-that statement** — much easier than debugging blind.
-
----
-
-## Part 1 — Set up Supabase
-
-### 1.1 Create the project
-1. Go to [supabase.com](https://supabase.com) → sign up (free) → **New Project**.
-2. Pick a name, a strong database password (save it somewhere), and a region
-   close to your customers.
-3. Wait ~2 minutes for provisioning.
-
-### 1.2 Run the schema
-1. In your project, open **SQL Editor** → **New query**.
-2. Open `supabase/migrations/0001_init.sql` from this project, copy its
-   entire contents, paste into the editor, and click **Run**.
-3. You should see "Success. No rows returned." Check **Table Editor** on the
-   left — you should see `branches`, `profiles`, `products`, `sales`, etc.
-4. The single file includes the full schema and all incremental updates in
-   order: branch map links, product intake and pricing, expenses and daily
-   closing calculations, manager profit summaries, and audit log protection.
-
-### 1.3 Get your API keys
-1. **Project Settings** (gear icon) → **API**.
-2. Copy the **Project URL** and the **anon / public** key (NOT the
-   `service_role` key — that one never goes in the frontend).
-3. For local use, copy `frontend/config.example.js` to
-   `frontend/config.js` and set your Project URL and anon/publishable key.
-   For Vercel, set `SUPABASE_URL` and `SUPABASE_ANON_KEY`; set `APP_URL` to
-   the deployed site origin for password reset links. If `APP_URL` is omitted,
-   the build uses Vercel's production domain (or deployment domain as a
-   fallback). A localhost `APP_URL` is ignored in Vercel builds.
-4. The anon/publishable key and project URL are public browser configuration,
-   not secrets. Supabase relies on Row Level Security and guarded functions
-   for access control. Never put the `service_role` key or a database password
-   in `frontend/`; keep service credentials in Supabase Edge Function secrets.
-
-### 1.4 Deploy the create-user Edge Function
-This needs the Supabase CLI (one-time install):
 ```bash
-npm install -g supabase
-supabase login
-cd dinah-supabase
-supabase link --project-ref YOUR-PROJECT-REF
-supabase functions deploy create-user
-supabase functions deploy admin-reset-password
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy create-user
+npx supabase functions deploy admin-reset-password
 ```
-(Find `YOUR-PROJECT-REF` in your project URL, or under Project Settings.)
-No extra environment variables needed — `SUPABASE_URL` and
-`SUPABASE_SERVICE_ROLE_KEY` are automatically available inside every Edge
-Function. The second function is what lets an Admin reset a Cashier's
-password directly from the **Users** page.
 
-### 1.5 Bootstrap your first Admin account
-Normal user creation happens through the app (a Manager creates other users
-from the **Users** page) — but that means the *very first* Admin has to be
-created manually, once:
+Replace `YOUR_PROJECT_REF` with the identifier from the Supabase project URL. Approve the browser login when prompted. The functions use Supabase's built-in `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` runtime variables. Do not add the service role key to Vercel or to any frontend file.
 
-1. Supabase Dashboard → **Authentication** → **Users** → **Add user**.
-2. Enter your real email and a password. **Check "Auto Confirm User"** so
-   you don't need to click an email confirmation link.
-3. Click the new user, and copy their **User UID**.
-4. Go to **SQL Editor** → new query → run (replacing the UUID and name):
-   ```sql
-   insert into public.profiles (id, full_name, role, active)
-   values ('PASTE-THE-USER-UID-HERE', 'Your Full Name', 'MANAGER', true);
-   ```
-5. That's it — you can now log in on the site with that email/password as
-   an Admin, and create every other user (Admins and Cashiers) from the
-   **Users** page from now on.
+### Create the first Manager account
 
-### 1.6 Make password-reset links actually work (required)
-The reset email is sent correctly, but Supabase will silently refuse to
-complete the login if the link's destination isn't on its allow-list — this
-is almost always why a reset link "doesn't work." Fix it once:
+The first Manager must be bootstrapped in Supabase because the app requires a Manager to create other staff accounts.
 
-1. Supabase Dashboard → **Authentication** → **URL Configuration**.
-2. Set **Site URL** to your real deployed frontend, e.g.
-   `https://your-project.vercel.app` (or your custom domain once you have one).
-3. Under **Redirect URLs**, add the same URL, ideally as a wildcard so it
-   still works after preview deploys: `https://your-project.vercel.app/**`.
-4. Save. Test the whole flow end to end: Login screen → Forgot Password →
-   check the email → click the link → you should land back on the site with
-   a "Set a New Password" form open automatically, not the dashboard.
+1. In Supabase, open **Authentication → Users → Add user**.
+2. Enter the Manager's email and a strong password. Confirm the user if Supabase offers that option.
+3. Open the new user and copy the **User UID**.
+4. In **SQL Editor**, run the following after replacing the example ID and name:
 
-The frontend uses `window.APP_URL` in `frontend/index.html` as the reset-link
-destination when it is set; otherwise it uses the current site origin. Set it
-to the deployed site origin before publishing (for example,
-`https://your-project.vercel.app`) and add that exact origin to Supabase
-**Redirect URLs**. Do not use `localhost` for real users: it points to the
-device that opens the email, not the computer running the development server.
+```sql
+insert into public.profiles (id, full_name, role, active)
+values ('PASTE-USER-UID-HERE', 'Manager Name', 'MANAGER', true);
+```
 
-If you ever see the reset link land you on the dashboard instead of the
-reset form, or show an "invalid or expired" toast, it's one of: this step
-wasn't done, the link is genuinely more than an hour old, or it was already
-used once (each link works only one time).
+The Manager can create branches, cashiers, products, and the remaining app data after signing in.
 
-### 1.7 Email delivery for password reset (Brevo)
-Supabase sends password-reset (and login-related) emails out of the box
-using its own limited email service. To send them through **Brevo**
-instead — for both password reset and future auth emails:
+## 2. Publish the website on Vercel
 
-1. Supabase Dashboard → **Authentication** → **Settings** → **SMTP Settings** → toggle **Enable Custom SMTP** on.
-2. Fill in:
-   ```
-   Sender email:    (an email address you've verified as a sender in Brevo)
-   Sender name:     Dinah Stationaries
-   Host:            smtp-relay.brevo.com
-   Port:            587
-   Username:        (your Brevo SMTP "Login" value — see below)
-   Password:        (your Brevo SMTP key)
-   ```
-3. **Where to find the Username + Password together:** Brevo Dashboard →
-   click your profile icon (top right) → **SMTP & API** → **SMTP** tab. Both
-   the **Login** (username) and the **SMTP key** (password) are shown on
-   that same page — copy the Login value from there; it's usually a string
-   ending in `@smtp-brevo.com`, not your regular Brevo account email.
-4. Click **Save**.
+### Push the project to GitHub
 
-**Important — this credential is a secret, not a public value.** It goes
-*only* into that Supabase dashboard field above. It must never be pasted
-into `index.html`, `app.js`, any file in this repo, or anywhere that ends up
-on GitHub or in your browser's source — unlike the Supabase anon key (which
-is safe to expose, and is already in `index.html`), an SMTP password lets
-someone send email *as your account* if it leaks. If you've shared this key
-anywhere it could be seen by others (a chat log, a screenshot, a public
-repo), the safe move is to regenerate it in Brevo afterward — it costs
-nothing and takes 10 seconds (same SMTP & API page → regenerate key).
+Create a private or public GitHub repository, then push this project to it. For a new repository, GitHub provides the commands to add its remote and push your current branch. Do not commit `.env.local`, `frontend/config.js`, or any service role/secret key. The repository `.gitignore` excludes those local config files.
 
----
+### Import the repository
 
-## Part 2 — Deploy the frontend to Vercel
+1. In Vercel, choose **Add New → Project**, then import the GitHub repository.
+2. Set **Root Directory** to `frontend`.
+3. Use these project settings:
 
-1. Push this project to GitHub (same as before):
-   ```bash
-   git init
-   git add .
-   git commit -m "Dinah Stationaries - Supabase production build"
-   git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/dinah-stationaries.git
-   git push -u origin main
-   ```
-2. Go to [vercel.com](https://vercel.com) → sign in with GitHub → **Add New → Project** → import your repo.
-3. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `APP_URL` under the project Settings ? Environment Variables. Configure:
-   - **Framework Preset:** Other
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `.`
-4. Click **Deploy**. You'll get a URL like `https://dinah-stationaries.vercel.app`.
-5. Open it and test: landing page loads, login works with your bootstrapped
-   Admin account, dashboard loads.
+   | Setting | Value |
+   | --- | --- |
+   | Framework Preset | Other |
+   | Build Command | `npm run build` |
+   | Output Directory | `.` |
+   | Install Command | Leave the default; there are no frontend dependencies to install. |
 
-The build creates `config.js` from those Vercel variables. The generated file is public in the browser by design and contains only the project URL and anon/publishable key. RLS and guarded database functions enforce access; never use the `service_role` key in the frontend.
+4. Add these Environment Variables for **Production**, and for Preview if you plan to test preview deployments:
 
-### Custom domain (optional)
-Vercel project → **Settings → Domains → Add** → follow the CNAME
-instructions at your DNS provider → free SSL is issued automatically. See
-the earlier `DOMAIN_DEPLOYMENT.md` guide for the general pattern (same idea,
-just Vercel instead of Netlify).
+   | Name | Value |
+   | --- | --- |
+   | `SUPABASE_URL` | The Supabase Project URL |
+   | `SUPABASE_ANON_KEY` | The Supabase publishable/anon key |
+   | `APP_URL` | The production website origin, e.g. `https://your-site.vercel.app` |
 
----
+   `APP_URL` is the origin only: do not add a path or trailing slash. The build writes `frontend/config.js` from these values. That file contains only browser-public configuration and is generated during deployment.
 
-## Landing page photos
+5. Deploy. Vercel will provide a `vercel.app` address when the build succeeds.
+6. After changing environment variables, trigger a new deployment so the generated browser configuration uses the new values.
 
-The landing page includes locally bundled illustrative stationery photography. These are inspiration images, not photographs of Dinah Stationaries' premises. Photo sources and Unsplash license links are listed in `frontend/assets/IMAGE_CREDITS.md`.
+The project settings above match Vercel's [Git deployment](https://vercel.com/docs/git) and [build configuration](https://vercel.com/docs/builds/configure-a-build) options.
 
-To show the real shop, replace the image files in `frontend/assets/` with your own photos while keeping the same filenames, or update the matching `src` paths in `frontend/index.html`. Keep wide photos for the hero and gallery images in landscape orientation for best results on phones and computers.
----
+## 3. Allow password reset redirects in Supabase
 
-## What's genuinely different from the earlier Express version
-- **No server to keep running** — Supabase and Vercel are both always-on
-  managed services on their free tiers (subject to their own free-tier
-  limits — check current Supabase/Vercel pricing pages for specifics).
-- **Real atomic transactions** — every Postgres function runs as one
-  transaction; a sale either fully commits (stock decremented, sale
-  recorded, totals updated) or fully rolls back, with no partial-write edge
-  cases possible.
-- **Real concurrency safety** — stock rows are row-locked (`for update`)
-  during a sale, so two cashiers can't oversell the same last item in a race.
-- **Email login** instead of username — Supabase Auth's native method,
-  which is also what makes the built-in password-reset flow work with no
-  custom email code needed.
+Once you know the website address:
 
-## What's still worth building next
-- **Offline-first PWA** — this version still assumes an internet connection;
-  offline support (Dexie/IndexedDB + a sync queue against the same RPC
-  functions) is the natural next step, same as noted for the earlier build.
-- **Purchase-unit ↔ base-unit conversion**, **printable receipts**, richer
-  **charts**, and **automated tests** — all still open, same as before.
-- **Multiple Admins editing the same settings/users concurrently** works
-  correctly (Postgres handles it), but there's no UI-level "someone else
-  just changed this" notice — acceptable for a small business, worth adding
-  if you grow to a larger team.
+1. In Supabase, open **Authentication → URL Configuration**.
+2. Set **Site URL** to the production website origin, for example `https://your-site.vercel.app`.
+3. Add the production origin to **Redirect URLs**, such as `https://your-site.vercel.app/**`.
+4. If using a custom domain, set `APP_URL` and **Site URL** to that domain and add `https://your-custom-domain/**` to Redirect URLs.
+5. Save, then redeploy Vercel if you changed `APP_URL`.
 
-## Testing checklist before you rely on this for real sales
-- [ ] Ran the full migration with no errors
-- [ ] Deployed the `create-user` Edge Function
-- [ ] Bootstrapped your first Admin and logged in successfully
-- [ ] Created a branch, a cashier, a product, assigned stock
-- [ ] Logged in as that cashier, completed a POS sale, confirmed stock decreased
-- [ ] Confirmed the cashier cannot see buying price/profit anywhere in the UI
-- [ ] Tried "Forgot Password" and received (or previewed) the reset email
-- [ ] Manager → Settings has your real business details, not placeholders
-- [ ] Custom domain (if used) shows a valid HTTPS padlock
+The app uses this allowed redirect for password reset links. Supabase documents these settings in [URL Configuration](https://supabase.com/docs/guides/auth/redirect-urls).
+
+## 4. Add your domain (optional)
+
+In Vercel, open the project **Settings → Domains**, add your domain, and follow the DNS instructions Vercel displays. Once HTTPS is active, update `APP_URL` and Supabase's Site URL and Redirect URLs to use the custom domain, then redeploy.
+
+## 5. Set up the business and verify the system
+
+1. Open the deployed website and sign in as the first Manager.
+2. Add the business details in **Settings**.
+3. Create a branch and provide its Google Maps link.
+4. Create a cashier account and assign it to the branch.
+5. Add products and stock.
+6. Sign in as the cashier and verify a sale, service transaction, and daily closing.
+7. Confirm the Manager can see reports and the Cashier cannot see purchase costs or manager-only data.
+8. Use **Forgot Password** and complete the email link flow.
+9. Check the site on a phone and a computer.
+
+## Email delivery (optional)
+
+Supabase can send password reset emails using its built-in email service. For reliable use by staff, configure a custom SMTP provider in Supabase **Authentication** settings. Keep SMTP credentials in Supabase's SMTP settings; never place them in this repository or Vercel's frontend environment variables.
+
+## Updating the hosted system
+
+- **Frontend changes:** commit and push to the connected GitHub branch. Vercel builds and deploys each push. Preview deployments can be used to review changes before production.
+- **Edge Function changes:** from the project folder, run `npx supabase functions deploy create-user` and/or `npx supabase functions deploy admin-reset-password` after linking to the correct Supabase project.
+- **Database changes:** back up production data and apply a reviewed SQL migration through Supabase. The consolidated `0001_init.sql` is intended for a new project setup; do not overwrite production schema changes without reviewing the upgrade steps.
+
+For more details, see Supabase's [Edge Function deployment guide](https://supabase.com/docs/guides/functions/deploy).
